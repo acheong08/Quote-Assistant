@@ -1,0 +1,192 @@
+[
+    {
+        "id": "tip_01",
+        "job": "stamping",
+        "diameter": 50.8,
+        "radius": 3.0,
+        "stepdown": 1.5,
+        "stepover": 40.0,
+        "feedrate": 4500.0,
+        "weight": 0.45
+    },
+    {
+        "id": "djt_01",
+        "job": "stamping",
+        "diameter": 50.8,
+        "radius": -1.0,
+        "stepdown": 0.7,
+        "stepover": 35.0,
+        "feedrate": 3800.0,
+        "weight": 0.45
+    },
+    {
+        "id": "tip_02",
+        "job": "stamping",
+        "diameter": 31.75,
+        "radius": 3.175,
+        "stepdown": 0.5,
+        "stepover": 20.0,
+        "feedrate": 3000.0,
+        "weight": 0.25
+    },
+    {
+        "id": "tip_03",
+        "job": "stamping",
+        "diameter": 25.4,
+        "radius": 3.175,
+        "stepdown": 0.6,
+        "stepover": 15.0,
+        "feedrate": 3000.0,
+        "weight": 0.25
+    },
+    {
+        "id": "tip_04",
+        "job": "stamping",
+        "diameter": 19.05,
+        "radius": 3.175,
+        "stepdown": 0.4,
+        "stepover": 10.0,
+        "feedrate": 3000.0,
+        "weight": 0.25
+    },
+    {
+        "id": "tip_05",
+        "job": "stamping",
+        "diameter": 12.7,
+        "radius": 3.175,
+        "stepdown": 0.3,
+        "stepover": 5.0,
+        "feedrate": 3000.0,
+        "weight": 0.25
+    },
+    {
+        "id": "tip_06",
+        "job": "stamping",
+        "diameter": 9.525,
+        "radius": 3.175,
+        "stepdown": 0.2,
+        "stepover": 2.0,
+        "feedrate": 3000.0,
+        "weight": 0.25
+    },
+    {
+        "id": "tip_07",
+        "job": "stamping",
+        "diameter": 6.35,
+        "radius": 0.078,
+        "stepdown": 0.1,
+        "stepover": 2.0,
+        "feedrate": 3000.0,
+        "weight": 0.25
+    },
+    {
+        "id": "bll_01",
+        "job": "stamping",
+        "diameter": 19.05,
+        "radius": -1.0,
+        "stepdown": 0.4,
+        "stepover": 0.4,
+        "feedrate": 4500.0,
+        "weight": 0.5
+    },
+    {
+        "id": "bll_02",
+        "job": "stamping",
+        "diameter": 12.7,
+        "radius": -1.0,
+        "stepdown": 0.3,
+        "stepover": 0.3,
+        "feedrate": 4500.0,
+        "weight": 0.5
+    },
+    {
+        "id": "bll_03",
+        "job": "stamping",
+        "diameter": 9.525,
+        "radius": -1.0,
+        "stepdown": 0.2,
+        "stepover": 0.2,
+        "feedrate": 4500.0,
+        "weight": 0.3
+    },
+    {
+        "id": "bll_04",
+        "job": "stamping",
+        "diameter": 4.762,
+        "radius": -1.0,
+        "stepdown": 0.1,
+        "stepover": 0.08,
+        "feedrate": 5000.0,
+        "weight": 0.125
+    },
+    {
+        "id": "bll_05",
+        "job": "stamping",
+        "diameter": 2.0,
+        "radius": -1.0,
+        "stepdown": 0.06,
+        "stepover": 0.035,
+        "feedrate": 5000.0,
+        "weight": 0.125
+    },
+    {
+        "id": "bll_06",
+        "job": "stamping",
+        "diameter": 6.35,
+        "radius": -1.0,
+        "stepdown": 0.15,
+        "stepover": 0.15,
+        "feedrate": 5000.0,
+        "weight": 0.125
+    },
+    {
+        "id": "bll_07",
+        "job": "stamping",
+        "diameter": 4.762,
+        "radius": -1.0,
+        "stepdown": 0.1,
+        "stepover": 0.08,
+        "feedrate": 5000.0,
+        "weight": 0.125
+    },
+    {
+        "id": "bll_08",
+        "job": "stamping",
+        "diameter": 3.175,
+        "radius": -1.0,
+        "stepdown": 0.07,
+        "stepover": 0.04,
+        "feedrate": 5000.0,
+        "weight": 0.125
+    },
+    {
+        "id": "bll_09",
+        "job": "stamping",
+        "diameter": 2.0,
+        "radius": -1.0,
+        "stepdown": 0.06,
+        "stepover": 0.035,
+        "feedrate": 5000.0,
+        "weight": 0.125
+    },
+    {
+        "id": "bll_10",
+        "job": "stamping",
+        "diameter": 1.587,
+        "radius": -1.0,
+        "stepdown": 0.05,
+        "stepover": 0.035,
+        "feedrate": 5000.0,
+        "weight": 0.125
+    },
+    {
+        "id": "bll_11",
+        "job": "stamping",
+        "diameter": 1.0,
+        "radius": -1.0,
+        "stepdown": 0.035,
+        "stepover": 0.025,
+        "feedrate": 5000.0,
+        "weight": 0.125
+    }
+]
