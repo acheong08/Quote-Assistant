@@ -1,8 +1,9 @@
 import os
 from typing import TextIO
 
-from src.application.constants import *
-from src.application.gui import *
+
+# from src.application.constants import *
+# from src.application.gui import *
 
 
 class ScreenUtil:
@@ -52,34 +53,6 @@ class BaseFileIO:
         except ValueError:
             self.file = open(self.file_path, 'r')
             return self.file.read().splitlines()
-
-    def set_data_txt(self):
-        self.data = []
-        lines = self.file.read().splitlines()
-        for line in lines:
-            print(line, lines)
-            if line == '':
-                continue
-            data_local = line.split(',')
-            allowed_length = FIELD_COUNT
-            if len(data_local) < allowed_length:
-                print(data_local)
-                print(len(data_local), allowed_length)
-                print("ERROR: Not enough values")
-                continue
-            print(data_local, allowed_length)
-            while len(data_local) > allowed_length:
-                data_local[allowed_length - 1] = ','.join([data_local[allowed_length - 1], data_local[allowed_length]])
-                print("APPENDING:", data_local[allowed_length])
-                del data_local[allowed_length]
-            print(data_local[allowed_length - 1])
-            for index, dt in enumerate(data_local):
-                try:
-                    data_local[index] = int(dt)
-                except ValueError:
-                    continue
-            self.data.append(tuple(data_local))
-        self.file.close()
 
 
 class CsvFileIO(BaseFileIO):

@@ -1,19 +1,20 @@
 from tkinter import *
 from tkinter import filedialog, ttk
-from typing import Any, List
+from typing import Any, List, Dict
 
 # from src.application.defaults import DEFAULT_DPI
 
-DARK_THEME = {'fg': 'white',
-              'bg': 'black',
-              'font': ('Futura', 24)}
+MASTER_THEME = {'fg': 'white',
+                'fgh': '#ff6900',
+                'bg': 'black',
+                'font': ('Bahnschrift', 24)}
 
 
 class WidgetCustom:
     """Custom widget base class to set default functions and values for all
     relevant widgets in the application."""
 
-    default_font = ('Futura', 24)
+    default_font = MASTER_THEME['font']
     btn_pressed = False
 
     def __init__(self, widget_type, *args, config_custom=None, text_var=Ellipsis, int_var=None, **kwargs):
@@ -29,6 +30,7 @@ class WidgetCustom:
         self.y_val = 0
         self.config = config_custom
         self.toggle_state = 1
+        print("CONFIG: ", self.config, config_custom)
 
     def place_custom(self, x_val: float = 0., y_val: float = 0.):
 
@@ -94,11 +96,13 @@ class WidgetCustom:
     def initialize(self, widget_type, window, args, kwargs):
         print(widget_type, args, kwargs)
 
-        if self.text is None and widget_type is not ttk.Radiobutton:
+        if self.text is None and widget_type is not Radiobutton:
             self.text = StringVar(window, value=kwargs['text'])
 
         self.widget = widget_type(window, *args, **kwargs)
+        print("CONFIG TEST:", self.config)
         if self.config is not None:
+            print("RUNNING CONFIG ON", self)
             self.widget.config(**self.config)
 
         if type(self.widget) == Checkbutton:
@@ -120,11 +124,11 @@ class LabelCustom(WidgetCustom):
                  content='',
                  font_style=WidgetCustom.default_font,
                  font_size=WidgetCustom.default_font[1],
-                 width=25,
+                 w=25,
                  height=1,
-                 border=2,
-                 fg_color="white",
-                 bg_color="black"):
+                 border=0,
+                 fg_color=MASTER_THEME['fg'],
+                 bg_color=MASTER_THEME['bg']):
         self.text = None
         # self.widget = Label(window,
         #                     text=content,
@@ -137,11 +141,12 @@ class LabelCustom(WidgetCustom):
         #                     textvariable=self.text)
         kwargs = dict(text=content,
                       font=(font_style[0], font_size),
-                      width=width,
+                      width=w,
                       height=height,
-                      bd=border,
+                      borderwidth=border,
                       fg=fg_color,
                       bg=bg_color,
+                      # relief='sunken',
                       textvariable=self.text)
         # self.text.set(content)
         super().__init__(Label, **kwargs)
@@ -154,18 +159,18 @@ class InputCustom(WidgetCustom):
 
     def __init__(self,
                  d_font_style=WidgetCustom.default_font,
-                 d_width=15,
-                 d_fg_color="white",
-                 d_bg_color="black"):
+                 w=14,
+                 d_fg_color=MASTER_THEME['fg'],
+                 d_bg_color=MASTER_THEME['bg']):
         # self.border = Frame(window,
         #                     background="white",
         #                     width=d_width * DEFAULT_DPI / 6.85,
         #                     height=2.5 * DEFAULT_DPI / 6.85, )
         kwargs = dict(font=d_font_style,
-                      width=d_width,
+                      width=w,
                       fg=d_fg_color,
-                      bg='black',
-                      bd=0)
+                      bg=d_bg_color,
+                      bd=6)
 
         super().__init__(Entry, **kwargs)
 
@@ -177,26 +182,28 @@ class OptionMenuCustom(WidgetCustom):
 
     def __init__(self,
                  *values,
-                 d_width=12,
+                 font_size=18,
+                 w=17,
                  theme=None):
         if theme is None:
-            theme = DARK_THEME
+            theme = MASTER_THEME
         self.text = None
-        configuration = dict(width=d_width,
+        configuration = dict(width=w,
                              bg=theme['bg'],
                              fg=theme['fg'],
-                             font=theme['font'])
+                             font=(theme['font'][0], font_size))
         # configuration = {'width': d_width,
         #                  'bg': theme['bg'],
         #                  'fg': theme['fg'],
         #                  'font': theme['font']}
-        print(configuration)
+        print("---OPTION MENU:", configuration)
         super().__init__(OptionMenu, *values, config_custom=configuration, text=self.text)
 
     def initialize(self, widget_type, window, args, kwargs):
         self.text = StringVar()
         self.widget = OptionMenu(window, self.text, args[0], *(args[1:]))
         self.widget.configure(textvariable=self.text)
+        self.widget.config(**self.config)
         self.text.set("Select an option")
 
 
@@ -228,11 +235,13 @@ class ButtonCustom(WidgetCustom):
 
 class CheckbuttonCustom(WidgetCustom):
 
-    def __init__(self, content=''):
+    def __init__(self, content='', theme=None):
+        if theme is None:
+            theme = MASTER_THEME
         kwargs = dict(text=content,
                       font=super().default_font,
-                      fg="black",
-                      bg="white",
+                      fg=theme['fgh'],
+                      bg=theme['bg'],
                       bd=0,
                       onvalue=1,
                       offvalue=0)
@@ -243,39 +252,49 @@ class RadioButtonCustom(WidgetCustom):
 
     def __init__(self, var, content='', state='0'):
         kwargs = dict(text=content,
-                      # font=super().default_font,
-                      # fg="black",
-                      # bg="white",
-                      # bd=0,
+                      font=super().default_font,
+                      fg="#ff6900",
+                      bg="black",
+                      bd=1,
+                      height=1,
                       # onvalue=1,
                       # offvalue=0,
                       value=state)
-        super().__init__(ttk.Radiobutton, text_var=var, **kwargs)
+        super().__init__(Radiobutton, text_var=var, **kwargs)
 
 
 class RadioButtonsCustom(WidgetCustom):
     # widgets: List[List[RadioButtonCustom, float, float]]
     widgets: List[RadioButtonCustom]
+    variable: StringVar
 
     def __init__(self, *args, **kwargs):
         self.widgets = []
         self.variable = None
+        self.previous_state = ''
         for val, arg in enumerate(args):
             self.widgets.append(RadioButtonCustom(self.variable, arg, str(val)))
 
-        super().__init__(ttk.Radiobutton, *args, **kwargs)
+        super().__init__(Radiobutton, *args, **kwargs)
+
+    def get_selection(self):
+        return self.variable.get()
 
     def place_custom(self, x_val: float = 0., y_val: float = 0.):
         for offset, widget in enumerate(self.widgets):
-            widget.widget.place(relx=x_val, rely=y_val + 0.05 * offset, anchor=CENTER)
+            widget.place_custom(x_val, y_val + 0.075 * offset)
+            # widget.widget.place(relx=x_val, rely=y_val + 0.05 * offset, anchor=CENTER)
             print(widget)
-            print("POSITION:",x_val,y_val + 0.05 * offset)
+            print("POSITION:", x_val, y_val + 0.05 * offset)
 
     def initialize(self, widget_type, window, args, kwargs):
         self.variable = StringVar()
         for widget in self.widgets:
+            widget.kwargs['variable'] = self.variable
             widget.initialize(widget_type, window, widget.args, widget.kwargs)
-        self.variable.set('0')
+            print(widget)
+            widget.widget.config(width=20)
+        # self.variable.set('0')
 
     def toggle_widget(self, desired_state=0):
         for widget in self.widgets:
@@ -292,9 +311,9 @@ class FileButtonCustom(WidgetCustom):
     def __init__(self, validated_cmd, invalidated_cmd=None, data_type='txt'):
         kwargs = dict(text="Browse File System",
                       font=super().default_font,
-                      fg="black",
-                      bg="white",
-                      bd=0,
+                      fg=MASTER_THEME['fg'],
+                      bg=MASTER_THEME['bg'],
+                      borderwidth=5,
                       command=self._browse_files)
         self.validated_cmd = validated_cmd
         self.invalidated_cmd = invalidated_cmd
@@ -312,12 +331,13 @@ class FileButtonCustom(WidgetCustom):
                                                           ("all files", "*.*")))
         if self.file_name != '' and temp_name == '':
             return
+
         self.file_name = temp_name
         print(self.file_name)
         if self.file_name[-len(self.file_type):] == self.file_type:
             self.widget.configure(text='File inputted.')
             self.validated_cmd(self.file_name)
-        else:
+        elif self.invalidated_cmd is not None:
             self.invalidated_cmd()
 
     def get_file_lines(self):
@@ -331,14 +351,24 @@ class FileButtonCustom(WidgetCustom):
         file.close()
         return lines
 
+    def get_file_path(self):
+        return self.file_name
+
 
 class ScreenCustom:
-    # widgets: dict[str, WidgetCustom]
+    widgets: Dict[str, WidgetCustom]
 
     def __init__(self, screen_manager, **kwargs):
         assert isinstance(screen_manager, ScreenManager)
         self.screen_manager = screen_manager
         self.widgets = {}
+        # self.widgets['background'] = LabelCustom('', width=1000, height=1000)]
+        # self.widgets['background'].initialize(Label,
+        #                                       self.screen_manager.window,
+        #                                       self.widgets['background'].args,
+        #                                       self.widgets['background'].kwargs)
+        # self.widgets['background'].place_custom(0.5, 0.5)
+        # self.widgets['background'].toggle_widget(0)
         for kwarg in kwargs:
             kwval = kwargs[kwarg]
             print("KWA:", kwarg, "| KWV:", kwval)
@@ -352,6 +382,7 @@ class ScreenCustom:
             self.widgets[kwarg].place_custom(kwval[1], kwval[2])
             self.widgets[kwarg].toggle_widget(0)
             self.widgets[kwarg].toggle_state = 1 if len(kwval) < 4 else kwval[3]
+        print(self.widgets)
 
     def set_screen(self, additional_functions=None):
         if self.screen_manager.current_screen is not Ellipsis:
@@ -379,7 +410,7 @@ class ScreenManager:
         self.window = window
 
     def __call__(self, *args, **kwargs):
-        return self.get_screen(args[0])
+        return self.current_screen if len(args) == 0 else self.get_screen(args[0])
 
     def get_screen(self, name: str = '', index: int = 0):
         screen: ScreenCustom = self.screens[list(self.screens)[index]] if name == '' else self.screens[name]
