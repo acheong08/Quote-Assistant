@@ -8,6 +8,8 @@ from application.gui import *
 from pttech.constants import *
 
 
+# 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
+
 class Master(App):
     selected_input: StringVar
 
@@ -55,6 +57,18 @@ class Master(App):
                                      0.85, 0.65],
                           xp_button=[ButtonCustom(self.set_export, 'Export', 10, 2),
                                      0.75, 0.9])
+                          ms_header=[LabelCustom('PT TECH QUOTE ASSISTANT', font_size=50), 0.5, 0.05],
+                          dt_header=[LabelCustom('Quote Details', font_size=36), 0.25, 0.2],
+                          qte_label=[LabelCustom('Quote'), 0.15, 0.3],
+                          qte_input=[InputCustom(), 0.35, 0.3],
+                          typ_label=[LabelCustom('Job Type'), 0.15, 0.4],
+                          typ_input=[OptionMenuCustom(''), 0.35, 0.4],
+                          prc_label=[LabelCustom('Precision Level'), 0.15, 0.5],
+                          prc_input=[OptionMenuCustom(*[str(n) for n in range(1, DIFFICULTIES + 1)]), 0.35, 0.5],
+                          cf_button=[ButtonCustom(self.set_config, 'Config', 10, 2), 0.25, 0.9],
+                          io_header=[LabelCustom('Input & Output', font_size=36), 0.75, 0.2],
+                          dim_radio=[RadioButtonsCustom('Excel File', 'Manual input'), 0.75, 0.3],
+                          xp_button=[ButtonCustom(self.set_export(), 'Export', 10, 2), 0.75, 0.9])
 
         export = ScreenUtil('Export',
                             exp_label=[LabelCustom(),
@@ -128,7 +142,7 @@ class DataHandler:
     def __init__(self):
         self.dimensions = (0, 0, 0)
         self.volume = 0
-    
+
     def set_dimensions(self, dimensions: Tuple[float]):
         self.dimensions = dimensions
         self.volume = numpy.prod(self.dimensions)
