@@ -15,26 +15,5 @@ DEFAULT_SCREEN = ['Test',
                       LabelCustom('Test'),
                       0.5,
                       0.25])]
-
-# Edit this in correspondence with the fields for the export location
-FIELD_KEYS: tuple = ('Team #',
-                     'Match #',
-                     'U-A[+]',
-                     'U-A[X]',
-                     'L-A[+]',
-                     'L-A[X]',
-                     'TMC',
-                     'HP Shot',
-                     'Taxi',
-                     'Ground',
-                     'HP',
-                     'U-T[+]',
-                     'U-T[X]',
-                     'L-T[+]',
-                     'L-T[X]',
-                     'Climb',
-                     'Climb Time',
-                     'Comments')
-
-FIELD_COUNT: int = len(FIELD_KEYS)
-
+DEFAULT_FPS = 60
+DEFAULT_TRANS_COLOR: str = "#012345"

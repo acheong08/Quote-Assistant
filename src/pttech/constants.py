@@ -27,7 +27,7 @@ def resource_path(relative_path):
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         import sys
         base_path = sys._MEIPASS
-    except Exception:
+    except AttributeError:
         base_path = os.path.abspath(".")
     print(os.path.join(base_path, relative_path))
     return os.path.join(base_path, relative_path)
@@ -54,12 +54,18 @@ def _get_super_dir(exponent, file=os.path.realpath(__file__)):
 
 print("SUPER DIR:", _get_super_dir(3))
 
+QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc Zinc Tool', '2pc Steel Tool')
+UNIT_TYPES = ('inch', 'millimeter')
+
+CIMATRON_LOCATORS = ('Box X:', 'Box Y:', 'Box Z')
+
 MAT_TOOLS_INFO = {'Steel': _insert_dict((0.741, 7.266, 3757.143)),
                   'Aluminum': _insert_dict((0.7395, 8.674285714, 3800.000)),
                   'Zinc': _insert_dict((0.894, 8.587, 4730.000))}
 MATERIALS = tuple(MAT_TOOLS_INFO.keys())
 MACHINES = ('GROB', 'HAAS2', 'OKK1', 'OKK2', 'VW1', 'VW2')
-DIFFICULTIES = 4
+MAX_DIFFICULTY = 4
+DIFFICULTIES = [str(n) for n in range(1, MAX_DIFFICULTY + 1)]
 INIT_PARAMETERS = (('Quote', 'Material', 'Difficulty', 'Machine'),
                    ['Box X', 'Box Y', 'Box Z', 'Volume', 'Mass',
                     'Projected Area'])
@@ -69,7 +75,7 @@ FORM_WIDGET_NAMES = ('Quote #',
                      'Machine Model',
                      'CAD File (STEP)')
 FORM_VALID_INPUTS = (MATERIALS,
-                     [str(n) for n in range(DIFFICULTIES + 1)],
+                     [str(n) for n in range(MAX_DIFFICULTY + 1)],
                      MACHINES,
                      ('.stp', '.step'))
 

@@ -1,11 +1,12 @@
 import _tkinter
-import os, sys
+import os
 import time
 
 from src.application.constants import *
 from tkinter import *
 from src.application.gui import *
 from src.application.utils import resource_path
+from multitasking import task
 
 
 class App:
@@ -46,8 +47,6 @@ class App:
         self.dim_x = self.app_fields['dimensions'][0]
         self.dim_y = self.app_fields['dimensions'][1]
 
-
-
         for screen in self.app_fields['screens']:
             print("SCREEN: ", screen)
             self.m_screen.add_screen(screen[0], screen[1])
@@ -71,8 +70,29 @@ class App:
         self.m_screen.get_screen(index=0).set_screen()
 
         try:
-            self.window.wm_attributes('-transparentcolor', 'black')
+            self.window.wm_attributes('-transparentcolor', DEFAULT_TRANS_COLOR)
         except _tkinter.TclError:
             print("Mac feature disables transparency.")
 
+        self.running = True
+
+        self._loop()
+
         self.window.mainloop()
+
+        self.running = False
+
+        os._exit(0)
+
+    @task
+    def _loop(self):
+        if not self.running:
+            exit()
+        time.sleep(1. / DEFAULT_FPS)
+        self.periodic()
+        self._loop()
+
+    def periodic(self):
+        pass
+
+
