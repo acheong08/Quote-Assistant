@@ -24,7 +24,7 @@ import os
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        # PyInstaller creates job temp folder and stores path in _MEIPASS
         import sys
         base_path = sys._MEIPASS
     except AttributeError:
@@ -34,8 +34,8 @@ def resource_path(relative_path):
 
 
 def _insert_dict(m_obj1, m_obj2=('Diameter', 'Stepover', 'FRATE')):
-    """Generates a dictionary based on given values and keys. In this case the
-    program utilizes its default case to give a dictionary based on cutting
+    """Generates job dictionary based on given values and keys. In this case the
+    program utilizes its default case to give job dictionary based on cutting
     info for each material type"""
 
     x_1, y_1, z_1 = map(str, m_obj2)
@@ -54,10 +54,12 @@ def _get_super_dir(exponent, file=os.path.realpath(__file__)):
 
 print("SUPER DIR:", _get_super_dir(3))
 
-QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc Zinc Tool', '2pc Steel Tool')
+QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc F/RS Zinc Tool', '2pc F/RS Steel Tool')
 UNIT_TYPES = ('inch', 'millimeter')
+MATERIAL_DENSITIES = {"Zinc": 0.25,
+                      "Steel": 0.283}
 
-CIMATRON_LOCATORS = ('Box X:', 'Box Y:', 'Box Z')
+CIMATRON_LOCATORS = ('Box X:', 'Box Y:', 'Box Z:')
 
 MAT_TOOLS_INFO = {'Steel': _insert_dict((0.741, 7.266, 3757.143)),
                   'Aluminum': _insert_dict((0.7395, 8.674285714, 3800.000)),

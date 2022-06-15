@@ -36,7 +36,7 @@ class BaseFileIO:
 
     def set_file(self, file_path):
         self.file_path = str(file_path)
-        self.file = open(str(self.file_path))
+        self.file = open(str(self.file_path), 'a')
 
     def manipulate_file(self, data):
         self.file.close()
@@ -75,7 +75,7 @@ class BaseDirectoryIO:
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        # PyInstaller creates job temp folder and stores path in _MEIPASS
         import sys
         base_path = sys._MEIPASS
     except AttributeError:

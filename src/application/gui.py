@@ -17,7 +17,7 @@ class WidgetCustom:
     default_font = MASTER_THEME['font']
     btn_pressed = False
 
-    def __init__(self, widget_type, *args, config_custom=None, text_var=Ellipsis, int_var=None, **kwargs):
+    def __init__(self, widget_type, *args, config_custom=None, text_var=StringVar, int_var=None, **kwargs):
         self.d_font = WidgetCustom.default_font
         self.displayable = True
         self.widget = None
@@ -50,21 +50,24 @@ class WidgetCustom:
         finally:
             pass
 
-    def get_value(self):
+    def get_value(self, data_type: type = str):
 
         """Method to return the widget's text value."""
 
         try:
+            print(self.widget.get(), data_type)
+            return 0. if self.widget.get() == '' and data_type is float else data_type(self.widget.get())
+        except ValueError:
             return self.widget.get()
         except AttributeError:
             if type(self.widget) is Checkbutton:
                 return self.var.get()
             return self.text.get()
         finally:
-            pass
+            print("There is no value to be found.")
 
     def set_value(self, value):
-        """Method to set a label's text value."""
+        """Method to set job label's text value."""
         try:
             self.text.set(value)
             print('---s')
@@ -94,12 +97,24 @@ class WidgetCustom:
         return None
 
     def initialize(self, widget_type, window, args, kwargs):
-        print(widget_type, args, kwargs)
+        print("-----", widget_type, args, kwargs)
 
-        if self.text is None and widget_type is not Radiobutton:
-            self.text = StringVar(window, value=kwargs['text'])
+        if self.text is not None and widget_type is not Radiobutton:
+            print('ADDING TEXT TO', widget_type, 'OBJECT')
+            try:
+                val = kwargs['text']
+                try:
+                    kwargs.pop('textvariable')
+                except KeyError:
+                    pass
+            except KeyError:
+                print("KEY ERROR")
+                val = ''
+            # self.widget.configure(textvariable=self.text)
+            self.text = StringVar(window, value=val)
 
-        self.widget = widget_type(window, *args, **kwargs)
+        self.widget = widget_type(window, *args, **kwargs, textvariable=self.text)
+
         print("CONFIG TEST:", self.config)
         if self.config is not None:
             print("RUNNING CONFIG ON", self)
@@ -118,7 +133,7 @@ class WidgetCustom:
 class LabelCustom(WidgetCustom):
     """Form label subclass of form widget.
 
-    Creates a default Label widget based on settings for the form."""
+    Creates job default Label widget based on settings for the form."""
 
     def __init__(self,
                  content='',
@@ -129,7 +144,7 @@ class LabelCustom(WidgetCustom):
                  border=0,
                  fg_color=MASTER_THEME['fg'],
                  bg_color=MASTER_THEME['bg']):
-        self.text = None
+        self.text = StringVar
         # self.widget = Label(window,
         #                     text=content,
         #                     font=d_font_style,
@@ -155,7 +170,7 @@ class LabelCustom(WidgetCustom):
 class InputCustom(WidgetCustom):
     """Form input subclass of form widget.
 
-    Creates a default Entry widget based on settings for the form."""
+    Creates job default Entry widget based on settings for the form."""
 
     def __init__(self,
                  d_font_style=WidgetCustom.default_font,
@@ -178,7 +193,7 @@ class InputCustom(WidgetCustom):
 class OptionMenuCustom(WidgetCustom):
     """Form option menu subclass of form widget.
 
-    Creates a default OptionMenu widget based on settings for the form."""
+    Creates job default OptionMenu widget based on settings for the form."""
 
     def __init__(self,
                  *values,
@@ -206,12 +221,16 @@ class OptionMenuCustom(WidgetCustom):
         self.widget.config(**self.config)
         self.text.set("Select an option")
 
+    def get_value(self, data_type: type = str):
+        return data_type(self.text.get())
 
+
+# noinspection PyTypeChecker
 class ButtonCustom(WidgetCustom):
     """Form reset button subclass of form widget.
 
-    Creates a Button widget based on settings for the form. Configured to run
-    a command to reset the application when clicked."""
+    Creates job Button widget based on settings for the form. Configured to run
+    job command to reset the application when clicked."""
 
     def __init__(self, cmd, content='', w=5, h=1, font_style=WidgetCustom.default_font,
                  font_size=WidgetCustom.default_font[1]):
@@ -223,7 +242,7 @@ class ButtonCustom(WidgetCustom):
                       bg="white",
                       bd=0,
                       command=cmd)
-        super().__init__(Button, **kwargs)
+        super().__init__(Button, **kwargs, text_var=None)
 
     # def attempt_reset(self):
     #     if FormWidget.btn_pressed:
@@ -301,11 +320,12 @@ class RadioButtonsCustom(WidgetCustom):
             widget.toggle_widget(desired_state)
 
 
+# noinspection PyTypeChecker
 class FileButtonCustom(WidgetCustom):
     """Form file button subclass of form widget.
 
-    Creates a Button widget based on settings for the form. Configured to open
-    a file dialog input system when clicked."""
+    Creates job Button widget based on settings for the form. Configured to open
+    job file dialog input system when clicked."""
     file_type: str
 
     def __init__(self, validated_cmd, invalidated_cmd=None, data_type='txt'):
@@ -319,14 +339,14 @@ class FileButtonCustom(WidgetCustom):
         self.invalidated_cmd = invalidated_cmd
         self.file_type = data_type
         self.file_name = ''
-        super().__init__(Button, **kwargs)
+        super().__init__(Button, **kwargs, text_var=None)
 
     def _browse_files(self):
 
         """Internal method to manage the filedialog window and resultantly
         attain the file path."""
 
-        temp_name = filedialog.askopenfilename(title="Select a File",
+        temp_name = filedialog.askopenfilename(title="Select job File",
                                                filetypes=(("File", str("." + self.file_type)),
                                                           ("all files", "*.*")))
         if self.file_name != '' and temp_name == '':
@@ -362,29 +382,26 @@ class ScreenCustom:
         assert isinstance(screen_manager, ScreenManager)
         self.screen_manager = screen_manager
         self.widgets = {}
-        # self.widgets['background'] = LabelCustom('', width=1000, height=1000)]
-        # self.widgets['background'].initialize(Label,
-        #                                       self.screen_manager.window,
-        #                                       self.widgets['background'].args,
-        #                                       self.widgets['background'].kwargs)
-        # self.widgets['background'].place_custom(0.5, 0.5)
-        # self.widgets['background'].toggle_widget(0)
-        for kwarg in kwargs:
-            kwval = kwargs[kwarg]
-            print("KWA:", kwarg, "| KWV:", kwval)
+        self.kwargs = kwargs
+        self.initialize_widgets()
+
+    def initialize_widgets(self):
+        self.widgets = {}
+        for kwarg in self.kwargs:
+            kwval = self.kwargs[kwarg]
             self.widgets[kwarg] = kwval[0]
-            print(self.widgets[kwarg])
             self.widgets[kwarg].initialize(self.widgets[kwarg].widget_type,
                                            self.screen_manager.window,
                                            self.widgets[kwarg].args,
                                            self.widgets[kwarg].kwargs)
             print(kwval)
             self.widgets[kwarg].place_custom(kwval[1], kwval[2])
+            self.widgets[kwarg].displayable = True
             self.widgets[kwarg].toggle_widget(0)
             self.widgets[kwarg].toggle_state = 1 if len(kwval) < 4 else kwval[3]
-        print(self.widgets)
+            print("KWA:", kwarg, "| KWV:", kwval, "| TOGGLE:", self.widgets[kwarg].toggle_state)
 
-    def set_screen(self, additional_functions=None):
+    def set_screen(self):
         if self.screen_manager.current_screen is not Ellipsis:
             print(self.screen_manager.current_screen)
             for widget in self.screen_manager.current_screen.widgets:
@@ -392,6 +409,10 @@ class ScreenCustom:
         for widget in self.widgets:
             self.widgets[widget].toggle_widget(self.widgets[widget].toggle_state)
         self.screen_manager.current_screen = self
+
+    def reset_screen(self):
+        self.initialize_widgets()
+        self.set_screen()
 
     # def initialize_screen(self, window):
     #     for n, widget in enumerate(self.widgets):

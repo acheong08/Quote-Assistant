@@ -39,8 +39,8 @@ class Tool:
         return text
 
     def _insert_dict(m_obj1, m_obj2=('Diameter', 'Stepover', 'FRATE')):
-        """Generates a dictionary based on given values and keys. In this case the
-        program utilizes its default case to give a dictionary based on cutting
+        """Generates job dictionary based on given values and keys. In this case the
+        program utilizes its default case to give job dictionary based on cutting
         info for each material type"""
         x_1, y_1, z_1 = map(str, m_obj2)
         x_2, y_2, z_2 = map(float, m_obj1)
@@ -116,7 +116,7 @@ class ToolManager():
 
 
 # =============================================================================
-#         file = open(TOOLS, 'a',encoding="utf-8", errors="replace")
+#         file = open(TOOLS, 'job',encoding="utf-8", errors="replace")
 #         file.write(json.dumps({'4': 5, '6': 7}, sort_keys=True, indent=4))
 #         file.close()
 #         
