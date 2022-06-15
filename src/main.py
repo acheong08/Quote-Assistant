@@ -12,7 +12,6 @@ from application.utils import *
 from application.gui import *
 from pttech.constants import *
 
-# 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
 from src.pttech.calculations import *
 
 
