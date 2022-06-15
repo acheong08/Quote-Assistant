@@ -1,5 +1,6 @@
 import _tkinter
 import os
+import sys
 import time
 
 from src.application.constants import *

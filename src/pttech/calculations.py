@@ -21,18 +21,21 @@ class BaseCalculations:
 class Material(BaseCalculations):
 
     def __init__(self):
-        self.get_required_volume = (self._3pcddz, self._2pcfrz, self._2pcfrs)
+        self._get_required_volume = (self._3pcddz, self._2pcfrz, self._2pcfrs)
         self.dimensions = [0., 0., 0.]
         self.required_volume = 0
         self.cost_density = 1
         super().__init__()
+
+    def get_volume(self):
+        return self.required_volume
 
     def calculate_cost(self, job, dimensions, conversion):
         self.dimensions = [0., 0., 0.]
         self.dimensions, self.space_conversion = dimensions, conversion
         self.dimensions = [self.dimensions[n] * self.space_conversion for n in range(3)]
         print(self.dimensions)
-        self.required_volume = self.get_required_volume[job](*dimensions)
+        self.required_volume = self._get_required_volume[job](*dimensions)
 
         self.total_cost += self.required_volume * self.cost_density
         print("VOLUME: ", self.required_volume, "\nCOST: ", self.total_cost)

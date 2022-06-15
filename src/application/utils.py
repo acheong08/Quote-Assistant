@@ -38,10 +38,10 @@ class BaseFileIO:
         self.file_path = str(file_path)
         self.file = open(str(self.file_path), 'a')
 
-    def manipulate_file(self, data):
+    def manipulate_file(self, *args):
         self.file.close()
         self.file = open(self.file_path, 'w')
-        self.file.writelines(data)
+        self.file.writelines(args)
         self.file.close()
 
     def get_data(self):

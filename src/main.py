@@ -95,8 +95,7 @@ class Master(App):
                          screens=[home(), export(), config()])
 
     def periodic(self):
-        if self.m_screen.current_screen == self.m_screen('Home'):
-            self.check_input_selection()
+        self.check_input_selection() if self.m_screen.current_screen == self.m_screen('Home') else None
 
     def save_data_excel(self, path):
         self.m_import.set_file(path)
@@ -105,6 +104,7 @@ class Master(App):
         print(self.m_data.dimensions)
 
     def save_data_manual(self):
+        # noinspection PyTypeChecker
         self.m_data.set_dimensions(tuple([float(self.m_screen().widgets[str('dm' + n + '_input')].get_value(float))
                                           for n in ('x', 'y', 'z')]))
         print(self.m_data.dimensions)
@@ -128,22 +128,38 @@ class Master(App):
         if self.process_data():
             print(self.m_screen().widgets['dim_radio'].get_selection())
         self.m_screen('Export').widgets['exp_label'].set_value('Total Volume: ' + str(round(self.m_calc(
-                Material).required_volume, 2)))
+            Material).required_volume, 2)))
         self.m_screen('Export').widgets['cst_label'].set_value('Total cost: ~$' + str(round(self.m_calc(
-                Material).get_cost(), 2)))
+            Material).get_cost(), 2)))
         self.m_screen('Export').set_screen()
 
     def process_data(self):
         if sum(self.m_data.get_dimensions()) <= 0:
             self.save_data_manual()
         self.m_data.set_type(self.m_screen().widgets['typ_input'].get_value())
+        self.m_data.set_type(self.m_screen().widgets['typ_input'].get_value())
         self.m_data.set_conversion(self.m_screen().widgets['msm_input'].get_value())
+        self.m_data.set_quote(self.m_screen('Home').widgets['qte_input'].get_value())
         print("GOT JOB TYPE:", self.m_data.get_type())
         print("GOT DATA TYPE:", self.m_data.get_conversion())
         self.m_calc(Material).calculate_cost(QUOTE_TYPES.index(self.m_data.get_type()),
                                              self.m_data.get_dimensions(),
                                              self.m_data.get_conversion())
+        self.m_data.set_volume(round(self.m_calc(Material).get_volume(), 2))
+        self.m_data.set_cost(round(self.m_calc(Material).get_cost(), 2))
         return True
+
+    def export_data(self):
+        from datetime import datetime as dt
+        from pathlib import Path as pt
+
+        current_dt = dt.now().strftime(" %Y-%m-%d_%H-%M-%S")
+        file_path = str(
+            pt.home() / 'Downloads' / str('[' + self.m_data.get_quote()
+                                          + '] ' + current_dt
+                                          + '.xlsx'))
+        self.m_export.create_file('../resources/documents/placeholder.xlsx', file_path)
+        self.m_export.manipulate_file(self.m_data.get_data(), 3)
 
     def check_input_selection(self):
         widgets_a = ['fl_button']
@@ -167,18 +183,6 @@ class Master(App):
                     self.m_screen('Home').widgets[widget].toggle_state = 1
                     self.m_screen('Home').widgets[widget].toggle_widget(1)
 
-    def export_data(self):
-        from datetime import datetime as dt
-        from pathlib import Path as pt
-        import ntpath as nt
-        quote = self.m_screen('Home').widgets['qte_input'].get_value()
-        current_dt = dt.now().strftime(" %Y-%m-%d_%H-%M-%S")
-        file_path = str(
-                pt.home() / 'Downloads' / str('[' + quote
-                                              + '] ' + current_dt
-                                              + '.xlsx'))
-        self.m_export.create_file('../resources/documents/placeholder.xlsx', file_path)
-
 
 class DataHandler:
     job_type: int
@@ -191,32 +195,71 @@ class DataHandler:
         self.job_type = -1
         self.conversion = 1
 
-        self.data = dict(dimensions=(0., 0., 0.),
-                         volume=0.,
+        self.data = dict(quote='',
                          job_type=-1,
-                         conversion=1)
+                         dimensions=(0., 0., 0.),
+                         precision=0,
+                         volume=0.,
+                         cost=0.,
+                         conversion=1.)
 
-    def set_dimensions(self, dimensions: Tuple[float, ...]):
-        self.dimensions = dimensions
-        self.volume = float(numpy.prod(self.dimensions))
+    def set_quote(self, quote):
+        self.data['quote'] = quote
+
+    def set_dimensions(self, dimensions: Tuple[float, float, float]):
+        self.data['dimensions'] = dimensions
+        # self.dimensions = dimensions
+        # self.volume = float(numpy.prod(self.dimensions))
 
     def set_type(self, index):
-        self.job_type = index
+        self.data['job_type'] = index
+        # self.job_type = index
 
     def set_conversion(self, unit):
         if unit == UNIT_TYPES[1]:
-            self.conversion = 1 / 25.4
+            self.data['conversion'] = 1 / 25.4
+            # self.conversion = 1 / 25.4
         else:
-            self.conversion = 1.
+            self.data['conversion'] = 1.
+            # self.conversion = 1.
+
+    def set_volume(self, volume):
+        self.data['volume'] = volume
+
+    def set_cost(self, cost):
+        self.data['cost'] = cost
 
     def get_dimensions(self):
-        return self.dimensions
+        return self.data['dimensions']
 
     def get_type(self):
-        return self.job_type
+        return self.data['job_type']
 
     def get_conversion(self):
-        return self.conversion
+        return self.data['conversion']
+
+    def get_quote(self):
+        return self.data['quote']
+
+    def get_volume(self):
+        return self.data['volume']
+
+    def get_cost(self):
+        return self.data['cost']
+
+    def get_data(self):
+        # print((self.data['quote'],
+        #         self.data['job_type'],
+        #         *[[n] for n in self.data['dimensions']],
+        #         self.data['precision'],
+        #         self.data['volume'],
+        #         self.data['cost']))
+        return (self.data['quote'],
+                self.data['job_type'],
+                *[n for n in self.data['dimensions']],
+                self.data['precision'],
+                self.data['volume'],
+                self.data['cost'])
 
 
 class ExcelIO(BaseFileIO):
@@ -249,6 +292,12 @@ class ExcelIO(BaseFileIO):
                 letter += alphabet[int(x) // 26 - 1]
                 x %= 26
         return letter + str(y)
+
+    def manipulate_file(self, data, row=1, column=1):
+        for index, item in enumerate(data):
+            print(type(self.sheet[self.get_cell(index + column, row)]), item)
+            self.sheet[self.get_cell(index + column, row)].value = item
+        self.book.save(self.file_path)
 
     def extract_data(self, cells):
         for n, cell in enumerate(cells):
