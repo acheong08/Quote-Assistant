@@ -12,7 +12,7 @@ from application.utils import *
 from application.gui import *
 from pttech.constants import *
 
-from pttech.calculations import *
+from src.pttech.calculations import *
 
 
 class Master(App):

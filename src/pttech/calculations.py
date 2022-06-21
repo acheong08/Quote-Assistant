@@ -1,4 +1,4 @@
-from src.pttech.constants import *
+from pttech.constants import *
 
 
 class BaseCalculations:
