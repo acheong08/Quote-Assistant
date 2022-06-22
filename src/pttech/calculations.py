@@ -1,6 +1,5 @@
+from pttech.constants import *
 from math import *
-
-from src.pttech.constants import *
 
 
 class BaseCalculations:

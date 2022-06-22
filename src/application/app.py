@@ -3,10 +3,10 @@ import os
 import sys
 import time
 
-from src.application.constants import *
+from application.constants import *
 from tkinter import *
-from src.application.gui import *
-from src.application.utils import resource_path
+from application.gui import *
+from application.utils import resource_path
 from multitasking import task
 
 

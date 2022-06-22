@@ -1,8 +1,8 @@
 from typing import Tuple, List, Union, Dict, Any
 
 # from src.application import LabelCustom
-from src.application.gui import *
-from src.application.gui import LabelCustom
+from application.gui import *
+from application.gui import LabelCustom
 
 DEFAULT_LOGO: str = 'resources/images/logo.png'
 DEFAULT_DPI: float = 0.14
