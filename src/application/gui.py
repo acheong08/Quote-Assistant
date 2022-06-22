@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, messagebox
 from typing import Any, List, Dict
 
 # from src.application.defaults import DEFAULT_DPI
@@ -203,6 +203,7 @@ class OptionMenuCustom(WidgetCustom):
         if theme is None:
             theme = MASTER_THEME
         self.text = None
+        self.default_text = "Select an option"
         configuration = dict(width=w,
                              bg=theme['bg'],
                              fg=theme['fg'],
@@ -219,10 +220,11 @@ class OptionMenuCustom(WidgetCustom):
         self.widget = OptionMenu(window, self.text, args[0], *(args[1:]))
         self.widget.configure(textvariable=self.text)
         self.widget.config(**self.config)
-        self.text.set("Select an option")
+        self.text.set(self.default_text)
 
     def get_value(self, data_type: type = str):
-        return data_type(self.text.get())
+        data = data_type(self.text.get())
+        return '' if data == self.default_text else data
 
 
 # noinspection PyTypeChecker
@@ -232,25 +234,20 @@ class ButtonCustom(WidgetCustom):
     Creates job Button widget based on settings for the form. Configured to run
     job command to reset the application when clicked."""
 
-    def __init__(self, cmd, content='', w=5, h=1, font_style=WidgetCustom.default_font,
+    def __init__(self, cmd, content='', w=5, h=1, f="white", b="black",
+                 font_style=WidgetCustom.default_font,
                  font_size=WidgetCustom.default_font[1]):
         kwargs = dict(text=content,
                       width=w,
                       height=h,
                       font=(font_style[0], font_size),
-                      fg="black",
-                      bg="white",
-                      bd=0,
+                      fg=f,
+                      bg=b,
+                      # bd=0,
+                      highlightthickness=1,
                       command=cmd)
-        super().__init__(Button, **kwargs, text_var=None)
-
-    # def attempt_reset(self):
-    #     if FormWidget.btn_pressed:
-    #         return
-    #     FormWidget.btn_pressed = True
-    #     reset()
-    #     FormWidget.btn_pressed = False
-
+        configuration=dict(highlightbackground='red', highlightcolor='red')
+        super().__init__(Button, **kwargs, text_var=None, config_custom=configuration)
 
 class CheckbuttonCustom(WidgetCustom):
 
@@ -375,6 +372,16 @@ class FileButtonCustom(WidgetCustom):
         return self.file_name
 
 
+class ErrorManager():
+
+    def __init__(self):
+        self.error_history = []
+
+    def display(self, message):
+        self.error_history.append(message)
+        messagebox.showerror('Error', message)
+
+
 class ScreenCustom:
     widgets: Dict[str, WidgetCustom]
 
@@ -408,6 +415,7 @@ class ScreenCustom:
                 self.screen_manager.current_screen.widgets[widget].toggle_widget(0)
         for widget in self.widgets:
             self.widgets[widget].toggle_widget(self.widgets[widget].toggle_state)
+        self.screen_manager.previous_screen = self.screen_manager.current_screen
         self.screen_manager.current_screen = self
 
     def reset_screen(self):
@@ -421,6 +429,7 @@ class ScreenCustom:
 
 
 class ScreenManager:
+    previous_screen: ScreenCustom
     current_screen: ScreenCustom
 
     # screens: dict[str, Any]
@@ -428,9 +437,10 @@ class ScreenManager:
     def __init__(self, window):
         self.screens = {}
         self.current_screen = ...
+        self.previous_screen = ...
         self.window = window
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> ScreenCustom:
         return self.current_screen if len(args) == 0 else self.get_screen(args[0])
 
     def get_screen(self, name: str = '', index: int = 0):

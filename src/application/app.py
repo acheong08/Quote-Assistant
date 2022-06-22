@@ -44,7 +44,10 @@ class App:
         print(self.app_fields)
 
         self.window = Tk()
+
         self.m_screen = ScreenManager(self.window)
+        self.m_error = ErrorManager()
+
         self.dim_x = self.app_fields['dimensions'][0]
         self.dim_y = self.app_fields['dimensions'][1]
 
@@ -87,8 +90,7 @@ class App:
 
     @task
     def _loop(self):
-        if not self.running:
-            exit()
+        exit() if not self.running else None
         time.sleep(1. / DEFAULT_FPS)
         self.periodic()
         self._loop()

@@ -54,10 +54,13 @@ def _get_super_dir(exponent, file=os.path.realpath(__file__)):
 
 print("SUPER DIR:", _get_super_dir(3))
 
-QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc F/RS Zinc Tool', '2pc F/RS Steel Tool')
+APP_MODES = ('Material Costs', 'Machine Hours [UNTESTED]')
+
+QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc F/RS Zinc Tool', '2pc F/RS Steel Tool', '2pc F/RS Al Tool')
 UNIT_TYPES = ('inch', 'millimeter')
 MATERIAL_DENSITIES = {"Zinc": 0.25,
-                      "Steel": 0.283}
+                      "Steel": 0.283,
+                      "Aluminum": 0.1}
 
 CIMATRON_LOCATORS = ('Box X:', 'Box Y:', 'Box Z:')
 

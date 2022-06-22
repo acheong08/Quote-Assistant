@@ -1,9 +1,8 @@
+import json
 import os
-from typing import TextIO
-
-
-# from src.application.constants import *
-# from src.application.gui import *
+import shutil
+import time
+import openpyxl as pyxl
 
 
 class ScreenUtil:
@@ -61,6 +60,103 @@ class CsvFileIO(BaseFileIO):
         super().__init__()
 
     # def editCsv(self):
+
+
+class ExcelIO(BaseFileIO):
+
+    def __init__(self):
+        super().__init__()
+        self.book = ...
+        self.sheet = ...
+
+    def set_file(self, file_path):
+        super().set_file(file_path)
+        self.book = pyxl.load_workbook(self.file_path)
+        self.sheet = self.book[self.book.sheetnames[0]]
+
+    def create_file(self, src, dst):
+        shutil.copy(src, dst)
+        time.sleep(1)
+        self.set_file(dst)
+
+    @staticmethod
+    def get_cell(x, y, letter=''):
+        alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+                    'U', 'V', 'W', 'X', 'Y', 'Z']
+
+        while x >= 1:
+            if x <= 26:
+                letter += alphabet[x - 1]
+                x = 0
+            else:
+                letter += alphabet[int(x) // 26 - 1]
+                x %= 26
+        return letter + str(y)
+
+    def manipulate_file(self, data, row=1, column=1):
+        for index, item in enumerate(data):
+            # print(type(self.sheet[self.get_cell(index + column, row)]), item)
+            self.sheet[self.get_cell(index + column, row)].value = item
+        self.book.save(self.file_path)
+
+    def extract_data(self, cells):
+        self.data = []
+        for n, cell in enumerate(cells):
+            print("SEARCHING FOR", cell)
+            for r in range(1, 100):
+                value = self.sheet[self.get_cell(1, r)].value
+                print(value)
+                if value == cell:
+                    self.data.append(float(self.sheet[self.get_cell(2, r)].value))
+                    print("FOUND")
+            if len(self.data) < n:
+                print("NOT FOUND.")
+        print("DONE:", self.data)
+
+
+class JsonIO(BaseFileIO):
+
+    def __init__(self):
+        super().__init__()
+
+    def add_entries(self, txt_input, fields):
+
+        with open(self.file_path, 'r', encoding="utf-8", errors="replace") as self.file:
+            self.data = json.load(self.file)
+
+        for n, txt_input in enumerate(txt_input):
+            entry = {}
+            for index, key in enumerate(fields):
+                entry[key] = txt_input[index]
+            self.data.append(entry)
+
+        self.file = open(self.file_path, 'w', encoding="utf-8", errors="replace")
+        self.file.write(json.dumps(self.data, sort_keys=False, indent=4))
+        self.file.close()
+
+    def edit_entry(self, entry, value):
+        self.file = open(self.file_path, 'w', encoding="utf-8", errors="replace")
+        self.data[entry] = value
+        self.file.write(json.dumps(self.data, sort_keys=False, indent=4))
+        self.file.close()
+
+    def write_entries(self):
+        self.file = open(self.file_path, 'w', encoding="utf-8", errors="replace")
+        self.file.write(json.dumps(self.data, sort_keys=False, indent=4))
+
+    def clear_entries(self):
+        with open(self.file_path, 'w', encoding="utf-8", errors="replace") as self.file:
+            self.file.write(json.dumps([], sort_keys=False, indent=4))
+
+    def get_entries(self):
+        try:
+            with open(self.file_path, 'r') as self.file:
+                self.data = json.load(self.file)
+                print("DATA:", self.data)
+        except FileNotFoundError:
+            print("NOT FOUND?")
+        print(self.data)
+        return self.data
 
 
 class BaseDirectoryIO:
