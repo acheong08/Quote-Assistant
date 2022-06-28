@@ -1,4 +1,12 @@
-from pttech.constants import *
+import numpy
+
+try:
+    from pttech.constants import *
+    from pttech.tools import *
+except ImportError:
+    # PyCharm is stupid, I'm stupid, we're all stupid.
+    from src.pttech.constants import *
+    from src.pttech.tools import *
 from math import *
 
 
@@ -28,6 +36,8 @@ class Material(BaseCalculations):
         self.required_volume = 0
         self.cost_density = 1
         self.max_offset = 0.5
+        self.basing_multiplier = 0.
+        self.additional_cost = 0.
         self.config = {}
         super().__init__()
 
@@ -41,9 +51,10 @@ class Material(BaseCalculations):
         self.config = config
         self.dimensions, self.space_conversion = dimensions, conversion
         self.dimensions = [self.dimensions[n] * self.space_conversion for n in range(3)]
+
         print(self.dimensions)
         self.required_volume = self._get_required_volume[job](*self.dimensions)
-        self.total_cost += self.required_volume * self.cost_density
+        self.total_cost += self.required_volume * self.cost_density + self.additional_cost
         print("VOLUME: ", self.required_volume, "\nCOST: ", self.total_cost)
 
     def _get_offset(self):
@@ -51,38 +62,46 @@ class Material(BaseCalculations):
 
     def _3pcddz(self, x, y, z):
         self.cost_density = MATERIAL_DENSITIES['Zinc'] * self.config["cost_per_pound_zinc"]
-        return (x + 2 * (z + 2) + self._get_offset()) * (y + 2 * (z + 2) + self._get_offset()) * int(z + 12)
+        self.additional_cost = x * y / 4 * PATTERN_MULTIPLIER + x * y * z * BASING_MULTIPLIERS['3pc']
+        return (x + 2 * (z + ZINC_PADDING) + self._get_offset()) * \
+               (y + 2 * (z + ZINC_PADDING) + self._get_offset()) * \
+               round(z + 12, 0)
 
     def _2pcfrz(self, x, y, z):
         self.cost_density = MATERIAL_DENSITIES['Zinc'] * self.config["cost_per_pound_zinc"]
-        return (x + 2 * z + self._get_offset()) * (y + 2 * z + self._get_offset()) * (z + 5)
+        self.additional_cost = x * y / 4 * PATTERN_MULTIPLIER + x * y * z * BASING_MULTIPLIERS['2pc']
+        return (x + 2 * z + self._get_offset()) * \
+               (y + 2 * z + self._get_offset()) * \
+               (z + 5)
 
     def _2pcfrs(self, x, y, z):
         self.cost_density = MATERIAL_DENSITIES['Steel'] * self.config["cost_per_pound_steel"]
-        return (self._get_next_even_number(x + 6) + self._get_offset()) * (self._get_next_even_number(y + 6) +
-                                                                           self._get_offset()) * (z + 2)
+        return (self._get_next_even_number(x + 6) + self._get_offset()) * \
+               (self._get_next_even_number(y + 6) + self._get_offset()) * \
+               (z + 2)
 
     def _2pcfra(self, x, y, z):
         self.cost_density = MATERIAL_DENSITIES['Aluminum'] * self.config["cost_per_pound_aluminum"]
-        return (self._get_next_even_number(x + 6) + self._get_offset()) * (self._get_next_even_number(y + 6) +
-                                                                           self._get_offset()) * (z + 2)
+        return (self._get_next_even_number(x + 6) + self._get_offset()) * \
+               (self._get_next_even_number(y + 6) + self._get_offset()) * \
+               (z + 2)
 
 
-class Machine(BaseCalculations):
+class Cutting(BaseCalculations):
     """Calculator class to execute all the calculations in order to determine
         the remaining output data."""
 
     def __init__(self):
         # Dictionary defined to map each instruction to corresponding method
+        self.dimensions = [0., 0., 0.]
+        self.precision = 1
         self.instructions = {'Volume To Remove': self._calculate_volume,
                              'Estimated FR Ratio': self._calculate_ratio,
                              'Percent Error': self._calculate_error,
                              'Cut Rate': self._calculate_rate,
                              'Time Required': self._calculate_time}
-        self.mapped_obj = None
-        self.initial_value = None
-        self.padding_amount = None
-        self.additional_values = None
+        self.cut_volume = self.cut_ratio = self.cut_error = self.cut_rate = 0
+        self.m_tools = ToolManager()
         super().__init__()
 
     # def __call__(self, operation,
@@ -109,6 +128,25 @@ class Machine(BaseCalculations):
     #     # The internal calculation is run and returns the resultant value
     #     return self.instructions[operation]()
 
+    def calculate_cost(self, material, dimensions, volume, precision, conversion):
+        self.dimensions = dimensions
+        self.part_volume = volume
+        self.space_conversion = conversion
+        self.precision = precision
+
+        self.dimensions = [self.dimensions[n] / self.space_conversion for n in range(3)]
+
+        self.cut_volume = self._calculate_volume()
+        self.cut_ratio = self._calculate_ratio()
+        self.cut_error = self._calculate_error()
+        self.cut_rate = self._calculate_rate()
+        self.total_cost += self._calculate_time()
+        print("TOTAL COST IN HOURS: ", self.total_cost)
+
+    @property
+    def get_additional_values(self):
+        return (self.cut_volume, self.cut_ratio, self.cut_error, self.cut_rate)
+
     def _calculate_volume(self) -> float:
         """Internal method to calculate volume to material remove.
 
@@ -124,8 +162,7 @@ class Machine(BaseCalculations):
 
             v = total volume occupied by the part"""
 
-        x, y, z, v = self.mapped_obj
-        r = x * y * z - v
+        r = numpy.prod(self.dimensions) - self.part_volume
         return round(r, 2)
 
     def _calculate_ratio(self) -> float:
@@ -148,9 +185,9 @@ class Machine(BaseCalculations):
 
             b = the original value to be modified (from ptt.constants)"""
 
-        l, h, w = self.mapped_obj
-        a = self.padding_amount
-        b = self.initial_value
+        l, h, w = map(float, self.dimensions)
+        a = FRATE_VAR
+        b = FRATE_RATIO
         x = abs((l + w + h) / 3)
         p = a * (-e ** (-0.00277 * x) + 1) + b
         return round(p, 3)
@@ -174,9 +211,9 @@ class Machine(BaseCalculations):
 
         potency = 0.25
 
-        d, m = self.mapped_obj
+        d = self.precision
         d = float(d)
-        x = self.initial_value
+        x = PCT_ERROR
         p = 1 + d * x * potency
         return round(p, 3)
 
@@ -198,8 +235,9 @@ class Machine(BaseCalculations):
 
             s = material average step over (from ptt.constants)"""
 
-        material, difficulty = self.mapped_obj
-        difficulty = float(difficulty)
+        # material, difficulty = self.mapped_obj
+
+        # difficulty = float(difficulty)
         # d, f, s = map(float, list(self.padding_amount[material].values()))
         # print("values:", d, s, f)
         # d /= 0.039370078740157
@@ -210,19 +248,21 @@ class Machine(BaseCalculations):
 
         potency = 0.25
 
-        for tool in self.additional_values:
+        tools = self.m_tools.get_job_tools('stamping')
+
+        for tool in tools:
             s += tool.data['weight']
 
-        for tool in self.additional_values:
+        for tool in tools:
             d, o, f, w = map(float,
                              list(list(tool.data.values())[n]
                                   for n in range(4, 8)))
-            print(d, o, s, self.additional_values)
-            a = -(-0.5 * difficulty + 1) * potency
-            w += a * (d * o / s / len(self.additional_values)) ** 0.5 - a
+            # print(d, o, s, tools)
+            a = -(-0.5 * self.precision + 1) * potency
+            w += a * (d * o / s / len(tools)) ** 0.5 - a
             # w += 0.05 * (2 - difficulty) * ln(d * o / s / 10.12)
             t.append(d * o * f * w)
-        print("AV WEIGHT----", s / len(self.additional_values))
+        print("AV WEIGHT----", s / len(tools))
         print("----CUT RATE:", sum(t) / s)
         r: float = sum(t) / s
         return round(r, 3)
@@ -247,8 +287,7 @@ class Machine(BaseCalculations):
 
             c = cut rate (calculated in a prior method)"""
 
-        print(self.mapped_obj)
-        v, r, p, c = self.mapped_obj
+        v, r, p, c = self.cut_volume, self.cut_ratio, self.cut_error, self.cut_rate
         t = (v / c) * p / r / 60
         print(v, r, p, c)
         return round(t, 3)
@@ -258,11 +297,15 @@ class MasterCalculations:
 
     def __init__(self):
         self.m_materials = Material()
+        self.m_cutting = Cutting()
         self.m_base = BaseCalculations()
 
     def __call__(self, calculator=BaseCalculations):
         if calculator is Material:
             print("CALC MATCH FOUND")
             return self.m_materials
+        elif calculator is Cutting:
+            print("CALC MATCH FOUND")
+            return self.m_cutting
         else:
             return self.m_base

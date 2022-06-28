@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import time
 from typing import Tuple
 
 from application import App
+
 from application.utils import *
 from application.gui import *
 from pttech.constants import *
@@ -11,20 +13,29 @@ from pttech.calculations import *
 
 class Master(App):
     selected_input: StringVar
-    placeholder_excel_devpath = '../resources/documents/placeholder.xlsx'
+    mat_placeholder_excel_devpath = '../resources/documents/placeholder_mat.xlsx'
+    cut_placeholder_excel_devpath = '../resources/documents/placeholder_cut.xlsx'
     config_json_devpath = '../resources/documents/config.json'
 
+    title_header = [LabelCustom('PT TECH UTILITY', fg_color=MASTER_THEME['fgh'], font_size=50, w=15),
+                    0.5, 0.05]
+
     def __init__(self):
-        menu = ScreenUtil('menu',
-                          ms_header=[LabelCustom('PT TECH UTILITY', fg_color=MASTER_THEME['fgh'], font_size=50),
-                                     0.5, 0.05],
+        self.default_geometry = (500, 500)
+        self.large_geometry = (1250, 750)
+        self.medium_geometry = (1000, 750)
+        menu = ScreenUtil('menu', self.default_geometry,
+                          ms_header=[LabelCustom('PT TECH UTILITY', fg_color=MASTER_THEME['fgh'], font_size=50, w=15,
+                                                 height=2),
+                                     0.5, 0.1],
                           mod_label=[LabelCustom('Select Mode'),
                                      0.5, 0.4],
                           mod_input=[OptionMenuCustom(*APP_MODES, w=25),
                                      0.5, 0.5])
-        home_mat = ScreenUtil('home_mat',
-                              ms_header=[LabelCustom('PT TECH UTILITY', fg_color=MASTER_THEME['fgh'], font_size=50),
-                                         0.5, 0.05],
+        home_mat = ScreenUtil('home_mat', self.large_geometry,
+                              ms_header=Master.title_header,
+                              md_header=[OptionMenuCustom(*APP_MODES, w=21, font_size=8, default_text=''),
+                                         0.9, 0.05],
                               dt_header=[LabelCustom('Quote Details', fg_color=MASTER_THEME['fgh'], font_size=36),
                                          0.25, 0.2],
                               qte_label=[LabelCustom('Quote'),
@@ -68,7 +79,9 @@ class Master(App):
                               xp_button=[ButtonCustom(self.set_export, 'Export', 10, 2),
                                          0.75, 0.9])
 
-        export_mat = ScreenUtil('export_mat',
+        export_mat = ScreenUtil('export_mat', self.large_geometry,
+                                md_header=[OptionMenuCustom(*APP_MODES, w=21, font_size=8, default_text=''),
+                                           0.9, 0.05],
                                 exp_label=[LabelCustom(),
                                            0.5, 0.4],
                                 cst_label=[LabelCustom(),
@@ -82,45 +95,68 @@ class Master(App):
                                 rt_button=[ButtonCustom(self.return_home, 'Return', 10, 2),
                                            0.3, 0.9],
                                 rs_button=[ButtonCustom(self.reset_home, 'Reset Form', 10, 2),
-                                           0.7, 0.9])
+                                           0.7, 0.9], )
 
-        config_mat = ScreenUtil('config_mat',
+        config_mat = ScreenUtil('config_mat', self.large_geometry,
+                                md_header=[OptionMenuCustom(*APP_MODES, w=21, font_size=8, default_text=''),
+                                           0.9, 0.05],
                                 scs_label=[LabelCustom('Steel Cost per unit mass'),
-                                           0.25, 0.1],
-                                scs_input=[InputCustom(),
-                                           0.75, 0.1],
-                                zcs_label=[LabelCustom('Zinc Cost per unit mass'),
                                            0.25, 0.2],
-                                zcs_input=[InputCustom(),
+                                scs_input=[InputCustom(),
                                            0.75, 0.2],
-                                acs_label=[LabelCustom('Aluminum Cost per unit mass'),
+                                zcs_label=[LabelCustom('Zinc Cost per unit mass'),
                                            0.25, 0.3],
-                                acs_input=[InputCustom(),
+                                zcs_input=[InputCustom(),
                                            0.75, 0.3],
+                                acs_label=[LabelCustom('Aluminum Cost per unit mass'),
+                                           0.25, 0.4],
+                                acs_input=[InputCustom(),
+                                           0.75, 0.4],
                                 rt_button=[ButtonCustom(self.update_config, 'Update', 10, 2),
                                            0.5, 0.9])
 
-        # TODO: set positions of widgets
-        home_mac = ScreenUtil('home_mac',
-                              job_label=[LabelCustom("Quote"),
-                                         0.4, 0.2],
-                              job_input=[InputCustom(),
-                                         0.6, 0.2],
+        home_cut = ScreenUtil('home_cut', self.medium_geometry,
+                              ms_header=Master.title_header,
+                              md_header=[OptionMenuCustom(*APP_MODES, w=21, font_size=8, default_text=''),
+                                         0.9, 0.05],
+                              qte_label=[LabelCustom("Quote"),
+                                         0.35, 0.25],
+                              qte_input=[InputCustom(),
+                                         0.65, 0.25],
                               mat_label=[LabelCustom("Material"),
-                                         0.4, 0.3],
-                              mat_input=[InputCustom(),
-                                         0.6, 0.3],
+                                         0.35, 0.35],
+                              mat_input=[OptionMenuCustom(*MATERIALS),
+                                         0.65, 0.35],
                               prc_label=[LabelCustom("Precision"),
-                                         0.4, 0.4],
+                                         0.35, 0.45],
                               prc_input=[OptionMenuCustom(*DIFFICULTIES),
-                                         0.6, 0.4],
-                              fil_label=[LabelCustom("Input File"),
-                                         0.4, 0.5],
-                              fl_button=[FileButtonCustom(self.set_export),
-                                         0.6, 0.5],
+                                         0.65, 0.45],
+                              fil_label=[LabelCustom("Cimatron File"),
+                                         0.35, 0.55],
+                              fl_button=[FileButtonCustom(self.save_data_excel, data_type='xlsx'),
+                                         0.65, 0.55],
                               mn_button=[ButtonCustom(self.reset_menu, 'Back to\nMenu', 10, 2),
                                          0.25, 0.9],
-                              )
+                              xp_button=[ButtonCustom(self.set_export, 'Export', 10, 2),
+                                         0.75, 0.9])
+
+        export_cut = ScreenUtil('export_cut', self.large_geometry,
+                                md_header=[OptionMenuCustom(*APP_MODES, w=21, font_size=8, default_text=''),
+                                           0.9, 0.05],
+                                exp_label=[LabelCustom(),
+                                           0.5, 0.4],
+                                cst_label=[LabelCustom(),
+                                           0.5, 0.5],
+                                ae_button=[ButtonCustom(self.append_data, 'Add Entry', 8, 1),
+                                           0.35, 0.7],
+                                xp_button=[ButtonCustom(self.export_data, 'Export', 8, 1),
+                                           0.5, 0.7],
+                                re_button=[ButtonCustom(self.reset_data, 'Reset Entries', 13, 2, font_size=16),
+                                           0.65, 0.7],
+                                rt_button=[ButtonCustom(self.return_home, 'Return', 10, 2),
+                                           0.3, 0.9],
+                                rs_button=[ButtonCustom(self.reset_home, 'Reset Form', 10, 2),
+                                           0.7, 0.9], )
 
         self.m_import = ExcelIO()
         self.m_export = ExcelIO()
@@ -131,23 +167,42 @@ class Master(App):
         self.m_config.set_file(Master.config_json_devpath)
 
         assert isinstance(self.m_calc(Material), Material)
+        assert isinstance(self.m_calc(Cutting), Cutting)
 
         super().__init__(title='Quote Assistant',
-                         dimensions=(1250, 750),
+                         dimensions=self.default_geometry,
                          lock=True,
-                         screens=[menu(), home_mat(), export_mat(), config_mat()])
+                         screens=[menu(),
+                                  home_mat(),
+                                  export_mat(),
+                                  config_mat(),
+                                  home_cut(),
+                                  export_cut()])
 
     def periodic(self):
-        self.check_screen_selection() if self.m_screen.current_screen == self.m_screen('menu') else None
-        self.check_input_selection() if self.m_screen.current_screen == self.m_screen('home_mat') else None
+        self.check_screen_selection() if self.m_screen.current_screen is self.m_screen('menu') else \
+            self.set_current_screen()
+        self.check_input_selection() if self.m_screen.current_screen is self.m_screen('home_mat') else None
+
+    def get_mode(self, shorthand=False):
+        for n, mode in enumerate(APP_MODES):
+            if self.m_screen().get_name()[-3:] in mode.lower():
+                return APP_MODES[n] if not shorthand else self.m_screen().get_name()[-3:]
+        return self.m_screen().get_name()
 
     def reset_menu(self):
         self.m_screen('menu').reset_screen()
+        self.window.geometry('500x500')
 
     def save_data_excel(self, path):
         self.m_import.set_file(path)
-        self.m_import.extract_data(CIMATRON_LOCATORS)
-        self.m_data.set_dimensions(tuple(self.m_import.get_data()))
+        print(self.m_screen().get_name())
+        self.m_import.extract_data(CIMATRON_LOCATORS[self.m_screen().get_name()[-3:]], offset=(1, 0))
+        self.m_data.set_dimensions(tuple(self.m_import.get_data()[:3]))
+        if self.get_mode() == APP_MODES[1]:
+            self.m_data.set_volume(self.m_import.get_data()[3])
+
+        print(self.m_data.get_dimensions(), '|', self.m_data.get_volume())
 
     def save_data_manual(self):
         # noinspection PyTypeChecker
@@ -169,52 +224,91 @@ class Master(App):
         self.reset_home()
 
     def return_home(self):
-        self.m_data = DataHandler()
+        # self.m_data = DataHandler()
         self.m_calc = MasterCalculations()
         self.set_home()
 
     def reset_home(self):
         self.m_data = DataHandler()
         self.m_calc = MasterCalculations()
-        self.m_screen('home_mat').reset_screen()
+        print(self.get_mode(True))
+        self.m_screen('home_' + self.get_mode(True)).reset_screen()
 
     def set_home(self):
-        self.m_screen('home_mat').set_screen()
+        self.m_screen('home_' + self.get_mode(True)).set_screen()
 
     def set_export(self):
         if not self.process_data():
             return
-        self.m_screen('export_mat').widgets['exp_label'].set_value('Total Volume: ' + str(round(self.m_calc(
-                Material).required_volume, 2)))
-        self.m_screen('export_mat').widgets['cst_label'].set_value('Total cost: ~$' + str(round(self.m_calc(
-                Material).get_cost(), 2)))
-        self.m_screen('export_mat').set_screen()
+        if self.get_mode() == APP_MODES[0]:
+            self.m_screen('export_mat').widgets['exp_label'].set_value('Total Volume: ' + str(round(self.m_calc(
+                    Material).required_volume, 2)))
+            self.m_screen('export_mat').widgets['cst_label'].set_value('Total cost: ~$' + str(round(self.m_calc(
+                    Material).get_cost(), 2)))
+            self.m_screen('export_mat').set_screen()
+        elif self.get_mode() == APP_MODES[1]:
+            # self.m_screen('export_cut').widgets['exp_label'].set_value('Total Volume: ' + str(round(self.m_calc(
+            #         Material).required_volume, 2)))
+            self.m_screen('export_cut').widgets['cst_label'].set_value('Total cost in hours: ~' + str(self.m_calc(
+                    Cutting).get_cost()))
+            self.m_screen('export_cut').set_screen()
 
     def process_data(self):
-        if sum(self.m_data.get_dimensions()) <= 0:
-            self.save_data_manual()
         try:
-            self.m_data.set_type(self.m_screen().widgets['typ_input'].get_value())
-            self.m_data.set_type(self.m_screen().widgets['typ_input'].get_value())
-            self.m_data.set_conversion(self.m_screen().widgets['msm_input'].get_value())
-            self.m_data.set_quote(self.m_screen().widgets['qte_input'].get_value())
-            self.m_data.set_precision(self.m_screen().widgets['prc_input'].get_value())
-            print("GOT JOB TYPE:", self.m_data.get_type())
-            print("GOT DATA TYPE:", self.m_data.get_conversion())
-            self.m_calc(Material).calculate_cost(QUOTE_TYPES.index(self.m_data.get_type()),
-                                                 self.m_data.get_dimensions(),
-                                                 self.m_data.get_conversion(),
-                                                 self.m_data.get_precision(),
-                                                 self.m_config.get_entries())
-        except ValueError:
+            if sum(self.m_data.get_dimensions()) <= 0:
+                self.save_data_manual()
+            print("---MODE: ", self.get_mode())
+            self._process_mat_calc() if self.get_mode() == APP_MODES[0] else self._process_cut_calc() if \
+                self.get_mode() == APP_MODES[1] else None
+        except (ValueError, KeyError) as e:
             self.m_error.display('Not all fields are filled out correctly!\nPlease try again.')
             return False
-        self.m_data.set_volume(round(self.m_calc(Material).get_volume(), 2))
-        self.m_data.set_cost(round(self.m_calc(Material).get_cost(), 2))
+        self._export_mat_calc() if self.get_mode() == APP_MODES[0] else self._export_cut_calc() if self.get_mode() == \
+            APP_MODES[1] else None
         return True
 
+    def _process_mat_calc(self):
+        print("--ATTEMPTING: Type")
+        self.m_data.set_type(self.m_screen().widgets['typ_input'].get_value())
+        print("--ATTEMPTING: conversion")
+        self.m_data.set_conversion(self.m_screen().widgets['msm_input'].get_value())
+        print("--ATTEMPTING: Quote")
+        self.m_data.set_quote(self.m_screen().widgets['qte_input'].get_value())
+        print("--ATTEMPTING: Precision")
+        self.m_data.set_precision(self.m_screen().widgets['prc_input'].get_value())
+        print("GOT JOB TYPE:", self.m_data.get_type())
+        print("GOT DATA TYPE:", self.m_data.get_conversion())
+        print("--ATTEMPTING: Calculation")
+        self.m_calc(Material).calculate_cost(QUOTE_TYPES.index(self.m_data.get_type()),
+                                             self.m_data.get_dimensions(),
+                                             self.m_data.get_conversion(),
+                                             self.m_data.get_precision(),
+                                             self.m_config.get_entries())
+
+    def _process_cut_calc(self):
+        print("--ATTEMPTING: Quote")
+        self.m_data.set_quote(self.m_screen().widgets['qte_input'].get_value())
+        print("--ATTEMPTING: Material")
+        self.m_data.set_type(self.m_screen().widgets['mat_input'].get_value())
+        print("--ATTEMPTING: Precision")
+        self.m_data.set_precision(self.m_screen().widgets['prc_input'].get_value())
+        self.m_data.set_conversion(UNIT_TYPES[1])
+        self.m_calc(Cutting).calculate_cost(self.m_data.get_type(),
+                                            self.m_data.get_dimensions(),
+                                            self.m_data.get_volume(),
+                                            self.m_data.get_precision(),
+                                            self.m_data.get_conversion())
+
+    def _export_mat_calc(self):
+        self.m_data.set_volume(round(self.m_calc(Material).get_volume(), 2))
+        self.m_data.set_cost(round(self.m_calc(Material).get_cost(), 2))
+
+    def _export_cut_calc(self):
+        self.m_data.set_additionals(self.m_calc(Cutting).get_additional_values)
+        self.m_data.set_cost(self.m_calc(Cutting).get_cost())
+
     def append_data(self):
-        self.m_data.add_entry(self.m_data.get_data())
+        self.m_data.add_entry(self.m_data.get_data(self.get_mode(True)))
         print("-ADDED ENTRY")
 
     def export_data(self):
@@ -225,7 +319,9 @@ class Master(App):
 
         entries = self.m_data.get_entries()
         quote_info = self.m_data.get_quote() if len(entries) == 1 else "Quotes"
-        self.m_export.create_file(Master.placeholder_excel_devpath,
+        file = Master.mat_placeholder_excel_devpath if self.get_mode() == APP_MODES[0] else \
+            Master.cut_placeholder_excel_devpath if self.get_mode() == APP_MODES[1] else ''
+        self.m_export.create_file(file,
                                   str(pt.home()
                                       / 'Downloads'
                                       / str(
@@ -239,9 +335,60 @@ class Master(App):
     def reset_data(self):
         self.m_data.reset_entries()
 
+    flag = True
+
+    def set_current_screen(self):
+        screen = self.m_screen().get_name()
+        array = ['mat', 'cut']
+        modes = [*APP_MODES]
+
+        for index, item in enumerate(array):
+            if item in self.m_screen().get_name():
+                temp = modes[index]
+                array.remove(item)
+                modes.pop(index)
+                array.append(item)
+                modes.append(temp)
+
+        for index, search in enumerate(array):
+            value = self.m_screen().widgets['md_header'].get_value().lower()
+            # time.sleep(0.5)
+            if self.m_screen.transitioning:
+                # print("Case 1")
+                # time.sleep(0.5)
+                continue
+            elif search not in value and search not in screen:
+                # print("Case 1.5")
+                Master.flag = True
+                continue
+            elif search in value:
+                # print(value)
+                if search in screen:
+                    # print("Case 2")
+                    Master.flag = False
+                    continue
+                # print('value:', value)
+                # print('screen:', screen)
+                self.m_screen('home_' + search).reset_screen()
+                for index, item in enumerate(array):
+                    if item in self.m_screen().get_name():
+                        temp = modes[index]
+                        array.remove(item)
+                        modes.pop(index)
+                        array.append(item)
+                        modes.append(temp)
+                # print("Case 3")
+                Master.flag = True
+                break
+            elif search in screen and Master.flag:
+                self.m_screen().widgets['md_header'].set_value(modes[index])
+                # print("Case 4")
+                break
+
     def check_screen_selection(self):
         observed_state = self.m_screen('menu').widgets['mod_input'].get_value()
-        self.m_screen('home_mat').reset_screen() if observed_state == 'Material Costs' else None
+        self.m_screen('home_mat').reset_screen() if observed_state == APP_MODES[0] else \
+            self.m_screen('home_cut').reset_screen() if observed_state == APP_MODES[1] else None
 
     def check_input_selection(self):
         widgets_a = ['fl_button']
@@ -280,11 +427,12 @@ class DataHandler:
                          precision=0,
                          volume=0.,
                          cost=0.,
-                         conversion=1.)
+                         units='inch',
+                         conversion=1.,
+                         additionals=None)
 
     def set_quote(self, quote):
-        self.data['quote'], DataHandler.quote = quote
-
+        self.data['quote'] = DataHandler.quote = quote
 
     def set_dimensions(self, dimensions: Tuple[float, float, float]):
         self.data['dimensions'] = dimensions
@@ -296,6 +444,7 @@ class DataHandler:
         # self.job_type = index
 
     def set_conversion(self, unit):
+        self.data['unit'] = unit
         if unit == UNIT_TYPES[1]:
             self.data['conversion'] = 1 / 25.4
             # self.conversion = 1 / 25.4
@@ -305,6 +454,9 @@ class DataHandler:
 
     def set_volume(self, volume):
         self.data['volume'] = float(volume)
+
+    def set_additionals(self, values):
+        self.data['additionals'] = values
 
     def set_cost(self, cost):
         self.data['cost'] = float(str(cost) + '0')
@@ -333,13 +485,23 @@ class DataHandler:
     def get_cost(self):
         return self.data['cost']
 
-    def get_data(self):
-        return (self.data['quote'],
-                self.data['job_type'],
-                *[n for n in self.data['dimensions']],
-                self.data['precision'],
-                self.data['volume'],
-                self.data['cost'])
+    def get_data(self, mode):
+        if mode == 'mat':
+            return (self.data['quote'],
+                    self.data['job_type'],
+                    *[n for n in self.data['dimensions']],
+                    self.data['units'],
+                    self.data['precision'],
+                    self.data['volume'],
+                    self.data['cost'])
+        elif mode == 'cut':
+            return (self.data['quote'],
+                    self.data['job_type'],
+                    *[n for n in self.data['dimensions']],
+                    self.data['volume'],
+                    self.data['precision'],
+                    *[n for n in self.data['additionals']],
+                    self.data['cost'])
 
     @staticmethod
     def add_entry(entry):

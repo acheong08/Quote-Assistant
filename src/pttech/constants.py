@@ -54,7 +54,7 @@ def _get_super_dir(exponent, file=os.path.realpath(__file__)):
 
 print("SUPER DIR:", _get_super_dir(3))
 
-APP_MODES = ('Material Costs', 'Machine Hours [UNTESTED]')
+APP_MODES = ('Material Costs', 'Cutting Hours [WIP]')
 
 QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc F/RS Zinc Tool', '2pc F/RS Steel Tool', '2pc F/RS Al Tool')
 UNIT_TYPES = ('inch', 'millimeter')
@@ -62,7 +62,12 @@ MATERIAL_DENSITIES = {"Zinc": 0.25,
                       "Steel": 0.283,
                       "Aluminum": 0.1}
 
-CIMATRON_LOCATORS = ('Box X:', 'Box Y:', 'Box Z:')
+PATTERN_MULTIPLIER = 0.15
+BASING_MULTIPLIERS = {'2pc': 0.2,'3pc': 0.3}
+ZINC_PADDING = 2
+
+CIMATRON_LOCATORS = {'mat': ('Box X:', 'Box Y:', 'Box Z:'),
+                     'cut': ('Box X:', 'Box Y:', 'Box Z:', 'Volume Total:')}
 
 MAT_TOOLS_INFO = {'Steel': _insert_dict((0.741, 7.266, 3757.143)),
                   'Aluminum': _insert_dict((0.7395, 8.674285714, 3800.000)),
@@ -106,7 +111,7 @@ ANALYSIS_ORDER = ('Volume To Remove',
                   'Time Required')
 
 
-TOOLS = resource_path('resources/data/tools.json')
+TOOLS = resource_path('pttech/tools.json')
 
 try:
     from sys import _MEIPASS

@@ -5,9 +5,15 @@ apps, you should inherit this module and make your custom features to work with 
 The following shows an example.
 """
 
-from application.app import App
-from application.gui import LabelCustom
-from application.utils import ScreenUtil
+try:
+    from application.app import App
+    from application.gui import LabelCustom
+    from application.utils import ScreenUtil
+except ImportError:
+    # PyCharm is stupid, I'm stupid, we're all stupid.
+    from src.application.app import App
+    from src.application.gui import LabelCustom
+    from src.application.utils import ScreenUtil
 
 
 class TestApp(App):

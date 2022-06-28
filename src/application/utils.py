@@ -3,15 +3,21 @@ import os
 import shutil
 import time
 import openpyxl as pyxl
+from typing import Dict, Tuple
+
+try:
+    from application.gui import WidgetCustom
+except ImportError:
+    from src.application.gui import WidgetCustom
 
 
 class ScreenUtil:
-
-    def __init__(self, name: str, setup=None, **kwargs):
+    # Dict[str, list[WidgetCustom, float, float]]
+    def __init__(self, name: str, geometry: Tuple = None, **kwargs):
         self.name = name
-        self.setup = setup
         self.widgets = kwargs
-        self.screen = [name, self.widgets]
+        self.geometry = geometry
+        self.screen = [self.name, self.geometry, self.widgets]
         print(self.screen)
 
     def __call__(self, index=-1, *args, **kwargs):
@@ -99,16 +105,17 @@ class ExcelIO(BaseFileIO):
             self.sheet[self.get_cell(index + column, row)].value = item
         self.book.save(self.file_path)
 
-    def extract_data(self, cells):
+    def extract_data(self, cells, x_range=1, y_range=100, offset=(0, 0)):
         self.data = []
         for n, cell in enumerate(cells):
             print("SEARCHING FOR", cell)
-            for r in range(1, 100):
-                value = self.sheet[self.get_cell(1, r)].value
-                print(value)
-                if value == cell:
-                    self.data.append(float(self.sheet[self.get_cell(2, r)].value))
-                    print("FOUND")
+            for c in range(1, x_range + 1):
+                for r in range(1, y_range + 1):
+                    value = self.sheet[self.get_cell(c, r)].value
+                    print(c, r, value)
+                    if value == cell:
+                        self.data.append(float(self.sheet[self.get_cell(c + offset[0], r + offset[1])].value))
+                        print("FOUND")
             if len(self.data) < n:
                 print("NOT FOUND.")
         print("DONE:", self.data)

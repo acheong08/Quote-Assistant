@@ -1,5 +1,6 @@
+import time
 from tkinter import *
-from tkinter import filedialog, ttk, messagebox
+from tkinter import filedialog, messagebox
 from typing import Any, List, Dict
 
 # from src.application.defaults import DEFAULT_DPI
@@ -197,13 +198,14 @@ class OptionMenuCustom(WidgetCustom):
 
     def __init__(self,
                  *values,
+                 default_text='Select an Option',
                  font_size=18,
                  w=17,
                  theme=None):
         if theme is None:
             theme = MASTER_THEME
         self.text = None
-        self.default_text = "Select an option"
+        self.default_text = default_text
         configuration = dict(width=w,
                              bg=theme['bg'],
                              fg=theme['fg'],
@@ -372,7 +374,7 @@ class FileButtonCustom(WidgetCustom):
         return self.file_name
 
 
-class ErrorManager():
+class ErrorManager:
 
     def __init__(self):
         self.error_history = []
@@ -385,12 +387,20 @@ class ErrorManager():
 class ScreenCustom:
     widgets: Dict[str, WidgetCustom]
 
-    def __init__(self, screen_manager, **kwargs):
+    def __init__(self, screen_manager, name, geometry, **kwargs):
         assert isinstance(screen_manager, ScreenManager)
         self.screen_manager = screen_manager
         self.widgets = {}
+        self._name = name
+        self._geometry = geometry
         self.kwargs = kwargs
         self.initialize_widgets()
+
+    def get_name(self):
+        return self._name
+
+    def get_geometry(self):
+        return self._geometry
 
     def initialize_widgets(self):
         self.widgets = {}
@@ -409,16 +419,22 @@ class ScreenCustom:
             print("KWA:", kwarg, "| KWV:", kwval, "| TOGGLE:", self.widgets[kwarg].toggle_state)
 
     def set_screen(self):
+        self.screen_manager.transitioning = True
+        time.sleep(0.05)
         if self.screen_manager.current_screen is not Ellipsis:
             print(self.screen_manager.current_screen)
             for widget in self.screen_manager.current_screen.widgets:
                 self.screen_manager.current_screen.widgets[widget].toggle_widget(0)
+        time.sleep(0.05)
+        self.screen_manager.modify_geometry(*self._geometry) if self._geometry is not None else None
         for widget in self.widgets:
             self.widgets[widget].toggle_widget(self.widgets[widget].toggle_state)
         self.screen_manager.previous_screen = self.screen_manager.current_screen
         self.screen_manager.current_screen = self
+        self.screen_manager.transitioning = False
 
     def reset_screen(self):
+        self.screen_manager.transitioning = True
         self.initialize_widgets()
         self.set_screen()
 
@@ -434,10 +450,12 @@ class ScreenManager:
 
     # screens: dict[str, Any]
 
-    def __init__(self, window):
+    def __init__(self, window, locked=False):
         self.screens = {}
+        self.locked = locked
         self.current_screen = ...
         self.previous_screen = ...
+        self.transitioning = False
         self.window = window
 
     def __call__(self, *args, **kwargs) -> ScreenCustom:
@@ -447,6 +465,13 @@ class ScreenManager:
         screen: ScreenCustom = self.screens[list(self.screens)[index]] if name == '' else self.screens[name]
         return screen
 
-    def add_screen(self, name, kwargs) -> None:
+    def add_screen(self, name, geometry, kwargs) -> None:
         print('SCREEN KWARGS: ', kwargs)
-        self.screens[name] = ScreenCustom(self, **kwargs)
+        self.screens[name] = ScreenCustom(self, name, geometry, **kwargs)
+
+    def modify_geometry(self, x, y):
+        if self.locked:
+            self.window.minsize(width=x, height=y)
+            self.window.maxsize(width=x, height=y)
+        self.window.geometry(str(x)+'x'+str(y))
+
