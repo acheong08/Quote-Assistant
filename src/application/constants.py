@@ -21,5 +21,5 @@ DEFAULT_SCREEN = ['Test',
                       LabelCustom('Test'),
                       0.5,
                       0.25])]
-DEFAULT_FPS = 60
+DEFAULT_FPS = 5
 DEFAULT_TRANS_COLOR: str = "#012345"
