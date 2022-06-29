@@ -13,9 +13,10 @@ from pttech.calculations import *
 
 class Master(App):
     selected_input: StringVar
-    mat_placeholder_excel_devpath = '../resources/documents/placeholder_mat.xlsx'
-    cut_placeholder_excel_devpath = '../resources/documents/placeholder_cut.xlsx'
-    config_json_devpath = '../resources/documents/config.json'
+    mat_placeholder_excel_devpath = resource_path('resources/documents/placeholder_mat.xlsx')
+    cut_placeholder_excel_devpath = resource_path('resources/documents/placeholder_cut.xlsx')
+    config_json_devpath = resource_path('resources/documents/config.json')
+    logo_devpath = resource_path('resources/images/logo.png')
 
     title_header = [LabelCustom('PT TECH UTILITY', fg_color=MASTER_THEME['fgh'], font_size=50, w=15),
                     0.5, 0.05]
@@ -172,6 +173,7 @@ class Master(App):
         super().__init__(title='Quote Assistant',
                          dimensions=self.default_geometry,
                          lock=True,
+                         logo=Master.logo_devpath,
                          screens=[menu(),
                                   home_mat(),
                                   export_mat(),

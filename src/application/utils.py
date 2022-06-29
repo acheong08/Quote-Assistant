@@ -181,7 +181,11 @@ def resource_path(relative_path):
         # PyInstaller creates job temp folder and stores path in _MEIPASS
         import sys
         base_path = sys._MEIPASS
+        base_path = os.path.abspath(".")
+        print("DIRFILES:", os.listdir(os.curdir))
     except AttributeError:
-        base_path = os.path.abspath("..")
+        print("DIRFILES:",os.listdir(os.curdir))
+        base_path = os.path.abspath(".") if 'python38.dll' in os.listdir(os.curdir) else os.path.abspath("..")
+
     print(os.path.join(base_path, relative_path))
     return os.path.join(base_path, relative_path)
