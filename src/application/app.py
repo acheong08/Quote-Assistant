@@ -87,7 +87,7 @@ class App:
 
         self.running = True
 
-        self._loop()
+        self._start_loop()
 
         self.window.mainloop()
 
@@ -96,6 +96,9 @@ class App:
         os._exit(0)
 
     @task
+    def _start_loop(self):
+        self._loop()
+
     def _loop(self):
         exit() if not self.running else None
         time.sleep(1. / DEFAULT_FPS)
