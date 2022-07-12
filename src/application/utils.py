@@ -101,7 +101,7 @@ class ExcelIO(BaseFileIO):
 
     def manipulate_file(self, data, row=1, column=1):
         for index, item in enumerate(data):
-            # print(type(self.sheet[self.get_cell(index + column, row)]), item)
+            print(type(self.sheet[self.get_cell(index + column, row)]), item)
             self.sheet[self.get_cell(index + column, row)].value = item
         self.book.save(self.file_path)
 

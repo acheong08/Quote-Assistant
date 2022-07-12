@@ -23,7 +23,7 @@ class BaseCalculations:
         return self.total_cost
 
     @staticmethod
-    def _get_next_even_number(n):
+    def _get_next_even_int(n):
         return float(int(n) + 1 if int(n) % 2 == 1 else int(n) + 2 if n != int(n) else n)
 
 
@@ -32,10 +32,12 @@ class Material(BaseCalculations):
     def __init__(self):
         self._get_required_volume = (self._3pcddz, self._2pcfrz, self._2pcfrs, self._2pcfra)
         self.dimensions = [0., 0., 0.]
+        self.mod_dimensions = [0., 0., 0.]
         self.precision = 1
         self.required_volume = 0
         self.cost_density = 1
-        self.max_offset = 0.5
+        self.combo = 1
+        self.max_offset = .25
         self.basing_multiplier = 0.
         self.additional_cost = 0.
         self.config = {}
@@ -44,8 +46,11 @@ class Material(BaseCalculations):
     def get_volume(self):
         return self.required_volume
 
-    def calculate_cost(self, job, dimensions, conversion, precision, config):
-        self.dimensions = [0., 0., 0.]
+    def get_block(self):
+        return self.mod_dimensions
+
+    def calculate_cost(self, job, dimensions, conversion, precision, is_combo, config):
+        # self.dimensions = [0., 0., 0.]
         self.precision = precision
         print("CONFIG IMPORT:", config)
         self.config = config
@@ -53,38 +58,47 @@ class Material(BaseCalculations):
         self.dimensions = [self.dimensions[n] * self.space_conversion for n in range(3)]
 
         print(self.dimensions)
+
         self.required_volume = self._get_required_volume[job](*self.dimensions)
+        self.combo = 1. if not is_combo else self.combo
+        print(">COMBO", self.combo)
+        self.required_volume *= self.combo
         self.total_cost += self.required_volume * self.cost_density + self.additional_cost
         print("VOLUME: ", self.required_volume, "\nCOST: ", self.total_cost)
 
     def _get_offset(self):
-        return self.max_offset / self.precision
+        return self.max_offset * self.precision
 
     def _3pcddz(self, x, y, z):
         self.cost_density = MATERIAL_DENSITIES['Zinc'] * self.config["cost_per_pound_zinc"]
-        self.additional_cost = x * y / 4 * PATTERN_MULTIPLIER + x * y * z * BASING_MULTIPLIERS['3pc']
-        return (x + 2 * (z + ZINC_PADDING) + self._get_offset()) * \
-               (y + 2 * (z + ZINC_PADDING) + self._get_offset()) * \
-               round(z + 12, 0)
+        self.combo = COMBO_MULTIPLIERS['Zinc']
+        self.mod_dimensions = [(x + 2 * (z + ZINC_PADDING) + self._get_offset()),
+                               (y + 2 * (z + ZINC_PADDING) + self._get_offset()),
+                               round(z + 12, 0)]
+        self.additional_cost = x * y * z / 4 * PATTERN_MULTIPLIER + x * y * BASING_MULTIPLIERS['3pc']
+        return prod(self.mod_dimensions)
 
     def _2pcfrz(self, x, y, z):
         self.cost_density = MATERIAL_DENSITIES['Zinc'] * self.config["cost_per_pound_zinc"]
-        self.additional_cost = x * y / 4 * PATTERN_MULTIPLIER + x * y * z * BASING_MULTIPLIERS['2pc']
-        return (x + 2 * z + self._get_offset()) * \
-               (y + 2 * z + self._get_offset()) * \
-               (z + 5)
+        self.mod_dimensions = [(x + 2 * z + self._get_offset()),
+                               (y + 2 * z + self._get_offset()),
+                               (z + 5)]
+        self.additional_cost = x * y * z / 4 * PATTERN_MULTIPLIER + x * y * BASING_MULTIPLIERS['2pc']
+        return prod(self.mod_dimensions)
 
     def _2pcfrs(self, x, y, z):
         self.cost_density = MATERIAL_DENSITIES['Steel'] * self.config["cost_per_pound_steel"]
-        return (self._get_next_even_number(x + 6) + self._get_offset()) * \
-               (self._get_next_even_number(y + 6) + self._get_offset()) * \
-               (z + 2)
+        self.mod_dimensions = [(self._get_next_even_int(x + 8) + self._get_offset()),
+                               (self._get_next_even_int(y + 6) + self._get_offset()),
+                               (z + 2)]
+        return prod(self.mod_dimensions)
 
     def _2pcfra(self, x, y, z):
         self.cost_density = MATERIAL_DENSITIES['Aluminum'] * self.config["cost_per_pound_aluminum"]
-        return (self._get_next_even_number(x + 6) + self._get_offset()) * \
-               (self._get_next_even_number(y + 6) + self._get_offset()) * \
-               (z + 2)
+        self.mod_dimensions = [(self._get_next_even_int(x + 8) + self._get_offset()),
+                               (self._get_next_even_int(y + 6) + self._get_offset()),
+                               (z + 2)]
+        return prod(self.mod_dimensions)
 
 
 class Cutting(BaseCalculations):
@@ -92,9 +106,10 @@ class Cutting(BaseCalculations):
         the remaining output data."""
 
     def __init__(self):
-        # Dictionary defined to map each instruction to corresponding method
+        self.total_time = 0.
         self.dimensions = [0., 0., 0.]
         self.precision = 1
+        # Dictionary defined to map each instruction to corresponding method
         self.instructions = {'Volume To Remove': self._calculate_volume,
                              'Estimated FR Ratio': self._calculate_ratio,
                              'Percent Error': self._calculate_error,
@@ -128,24 +143,36 @@ class Cutting(BaseCalculations):
     #     # The internal calculation is run and returns the resultant value
     #     return self.instructions[operation]()
 
-    def calculate_cost(self, material, dimensions, volume, precision, conversion):
+    def get_time(self):
+        return self.total_time
+
+    def calculate_cost(self, mat, dimensions, volume, precision, conversion, is_combo, config):
+        self.material = 'zinc' if mat in (0, 1) else 'steel' if mat in (2,) else 'aluminum' if mat in (3,) else ''
         self.dimensions = dimensions
         self.part_volume = volume
         self.space_conversion = conversion
         self.precision = precision
-
+        self.config = config
         self.dimensions = [self.dimensions[n] / self.space_conversion for n in range(3)]
 
-        self.cut_volume = self._calculate_volume()
-        self.cut_ratio = self._calculate_ratio()
-        self.cut_error = self._calculate_error()
-        self.cut_rate = self._calculate_rate()
-        self.total_cost += self._calculate_time()
-        print("TOTAL COST IN HOURS: ", self.total_cost)
+        # self.cut_volume = self._calculate_volume()
+        # self.cut_ratio = self._calculate_ratio()
+        # self.cut_error = self._calculate_error()
+        # self.cut_rate = self._calculate_rate()
+        # self.total_cost += self._calculate_time()
+
+        self.combo = 1. if not is_combo else COMBO_MULTIPLIERS[self.material.capitalize()]
+        self.total_time += self._legacy_method() * self.combo / 2.4
+        self.total_cost += self.total_time * self.config['cost_per_hour_' + self.material]
+        print('TOTAL COST IN HOURS: ', self.total_cost)
+        self.total_cost = 0
+
+    def _legacy_method(self):
+        return prod(self.dimensions) / 144
 
     @property
     def get_additional_values(self):
-        return (self.cut_volume, self.cut_ratio, self.cut_error, self.cut_rate)
+        return tuple([self.cut_volume, self.cut_ratio, self.cut_error, self.cut_rate])
 
     def _calculate_volume(self) -> float:
         """Internal method to calculate volume to material remove.
@@ -269,7 +296,7 @@ class Cutting(BaseCalculations):
 
     def _calculate_time(self) -> float:
         """[WIP] Internal method to calculate predicted machine time for a
-        quote in hours.
+        tool in hours.
 
         This formula involves taking the initial volume and rates and modifying
         the quotient by a certain amount depending on certain factors. In this
@@ -309,3 +336,9 @@ class MasterCalculations:
             return self.m_cutting
         else:
             return self.m_base
+
+    def get_cumulative_cost(self):
+        cost = 0
+        for calculator in [self.m_base, self.m_cutting, self.m_materials]:
+            cost += calculator.get_cost()
+        return cost

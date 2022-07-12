@@ -30,7 +30,12 @@ def resource_path(relative_path):
     except AttributeError:
         base_path = os.path.abspath(".")
         print("DIRFILES:", os.listdir(os.curdir))
-        base_path = os.path.abspath(".") if 'python38.dll' in os.listdir(os.curdir) else os.path.abspath("..")
+        if 'python38.dll' in os.listdir(os.curdir):
+            print("EXECUTABLE?")
+            base_path = os.getenv('APPDATA') if 'resources' in relative_path else os.path.abspath(".")
+        else:
+            print("NON_EXECUTABLE?")
+            base_path = os.path.abspath("..")
     print(os.path.join(base_path, relative_path))
     return os.path.join(base_path, relative_path)
 
@@ -63,6 +68,10 @@ UNIT_TYPES = ('inch', 'millimeter')
 MATERIAL_DENSITIES = {"Zinc": 0.25,
                       "Steel": 0.283,
                       "Aluminum": 0.1}
+
+COMBO_MULTIPLIERS = {'Zinc': 1.6,
+                     'Steel': 2.,
+                     'Aluminum': 2.}
 
 PATTERN_MULTIPLIER = 0.15
 BASING_MULTIPLIERS = {'2pc': 0.2,'3pc': 0.3}

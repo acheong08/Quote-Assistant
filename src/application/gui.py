@@ -265,6 +265,8 @@ class CheckbuttonCustom(WidgetCustom):
                       offvalue=0)
         super().__init__(Checkbutton, **kwargs)
 
+    def get_value(self, data_type: type = str):
+        return True if self.var.get() == 1 else False
 
 class RadioButtonCustom(WidgetCustom):
 
@@ -279,6 +281,7 @@ class RadioButtonCustom(WidgetCustom):
                       # offvalue=0,
                       value=state)
         super().__init__(Radiobutton, text_var=var, **kwargs)
+
 
 
 class RadioButtonsCustom(WidgetCustom):
@@ -338,6 +341,7 @@ class FileButtonCustom(WidgetCustom):
         self.invalidated_cmd = invalidated_cmd
         self.file_type = data_type
         self.file_name = ''
+        self.inputted = False
         super().__init__(Button, **kwargs, text_var=None)
 
     def _browse_files(self):
@@ -355,6 +359,7 @@ class FileButtonCustom(WidgetCustom):
         print(self.file_name)
         if self.file_name[-len(self.file_type):] == self.file_type:
             self.widget.configure(text='File inputted.')
+            self.inputted = True
             self.validated_cmd(self.file_name)
         elif self.invalidated_cmd is not None:
             self.invalidated_cmd()
@@ -372,6 +377,9 @@ class FileButtonCustom(WidgetCustom):
 
     def get_file_path(self):
         return self.file_name
+
+    def is_file_inputted(self) -> bool:
+        return True if self.inputted else False
 
 
 class ErrorManager:

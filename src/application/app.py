@@ -100,15 +100,18 @@ class App:
         self._loop()
 
     def _loop(self):
-        exit() if not self.running else None
-        time.sleep(1. / DEFAULT_FPS)
-        try:
-            self.periodic() if not self.m_screen.transitioning else print("TRANSITIONING...")
-        except AttributeError:
-            print("ATTRIBUTE ERROR IN PERIODIC.")
-        except KeyError:
-            print("KEY ERROR IN PERIODIC.")
-        self._loop()
+        while self.running:
+            exit() if not self.running else None
+            time.sleep(1. / DEFAULT_FPS)
+            try:
+                self.periodic() if not self.m_screen.transitioning else print("TRANSITIONING...")
+            # except AttributeError:
+            #     print("ATTRIBUTE ERROR IN PERIODIC.")
+            #     exit()
+            except KeyError:
+                print("KEY ERROR IN PERIODIC.")
+                exit()
+            # self._loop()
 
     def periodic(self):
         pass
