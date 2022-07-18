@@ -82,7 +82,7 @@ class ExcelIO(BaseFileIO):
 
     def create_file(self, src, dst):
         shutil.copy(src, dst)
-        time.sleep(1)
+        time.sleep(1.)
         self.set_file(dst)
 
     @staticmethod

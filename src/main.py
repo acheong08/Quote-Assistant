@@ -201,7 +201,7 @@ class Master(App):
         self.m_config = JsonIO()
 
         # Initializing data and calculation managers
-        self.m_data = DataHandler()
+        self.m_data = Master.DataHandler()
         self.m_calc = MasterCalculations()
 
         # Setting config file path
@@ -335,7 +335,7 @@ class Master(App):
         """
 
         # Data storage and calculator both re-initialized
-        self.m_data = DataHandler()
+        self.m_data = Master.DataHandler()
         self.m_calc = MasterCalculations()
         print(self.get_mode(True))
         # Home screen reset
@@ -393,6 +393,10 @@ class Master(App):
         return True
 
     def _process_mat_calc(self):
+        """
+        Internal method to process material information specifically (now includes cutting hours testing).
+        """
+
         print("--ATTEMPTING: Type")
         self.m_data.set_type(self.m_screen().widgets['typ_input'].get_value())
         print("--ATTEMPTING: conversion")
@@ -408,6 +412,8 @@ class Master(App):
         print("GOT DATA TYPE:", self.m_data.get_conversion())
         print("GOT COMBO TYPE:", self.m_data.get_combo())
         print("GOT DIMS:", self.m_data.get_dimensions())
+
+        # Material calculator calculates cost with the parameters just
         print("--ATTEMPTING: Calculation")
         self.m_calc(Material).calculate_cost(QUOTE_TYPES.index(self.m_data.get_type()),
                                              self.m_data.get_dimensions(),
@@ -442,6 +448,10 @@ class Master(App):
                                             self.m_data.get_conversion())
 
     def _export_mat_calc(self):
+        """
+        Internal method that sets appropropriate values post-calculation into their corresponding values in the
+        dictionary found within the data storage.
+        """
         self.m_data.set_cost(round(self.m_calc(Material).get_cost(), 2), 'mat')
         self.m_data.set_cost(round(self.m_calc(Cutting).get_cost(), 2), 'cut')
         self.m_data.set_cost(round(self.m_calc.get_cumulative_cost(), 2))
@@ -451,11 +461,19 @@ class Master(App):
         self.m_data.set_cost(self.m_calc(Cutting).get_cost())
 
     def append_data(self):
+        """
+        Method that adds an entry to a class variable to be exported to excel.
+        """
+
         self.exported = False
         self.m_data.add_entry(self.m_data.get_data(self.get_mode(True)))
         print("-ADDED ENTRY")
 
     def export_data(self):
+        """
+        Method that exports said entry(s) in a variable as determined by the above method.
+        """
+
         from datetime import datetime as dt
         from pathlib import Path as Pt
 
@@ -463,9 +481,12 @@ class Master(App):
 
         entries = self.m_data.get_entries()
         print("EXPORT ENTRIES:\n", entries)
+        # The title of the document is configured so it is not blank
         quote_info = self.m_data.get_tool() if len(entries) == 1 and entries[0][0] != '' else "Quotes"
+        # The placeholder file is determined (which type of base file to write on)
         file = Master.mat_placeholder_excel_devpath if self.get_mode() == APP_MODES[0] else \
             Master.cut_placeholder_excel_devpath if self.get_mode() == APP_MODES[1] else ''
+        # A copy of the selected placeholder file is made in the user downloads folder
         self.m_export.create_file(file,
                                   str(Pt.home()
                                       / 'Downloads'
@@ -473,18 +494,27 @@ class Master(App):
                                           '[' + quote_info + '] '
                                           + dt.now().strftime(" %Y-%m-%d  ""%H-%M-%S")
                                           + '.xlsx')))
+        # Enumeration through each item in the list of entries to append them to the excel spreadsheet
         for index, entry in enumerate(entries):
             self.m_export.manipulate_file(entry, index + 3)
+        # Exported text will now display on the UI
         self.exported = True
         print("-EXPORTED ALL ENTRIES")
 
     def reset_data(self):
-        self.exported = False
-        self.m_data.reset_entries()
+        """
+        Method that resets the entries variable containing any previous entries added.
+        """
 
-    flag = True
+        self.m_data.reset_entries()
+        # Exported text will be hence removed from the UI
+        self.exported = False
 
     def set_current_screen(self):
+        """
+        Method that switches screens based on the mode selection. Should be run periodically. Currently unused.
+        """
+
         screen = self.m_screen().get_name()
         array = ['mat', 'cut']
         modes = [*APP_MODES]
@@ -528,6 +558,10 @@ class Master(App):
             self.m_screen('home_cut').reset_screen() if observed_state == APP_MODES[1] else None
 
     def check_input_selection(self):
+        """
+        Method to check which widgets to display corresponding to type of input selection. Should be run periodically.
+        """
+
         widgets_a = ['fl_button']
         widgets_b = ['dmx_label', 'dmy_label', 'dmz_label', 'dmx_input', 'dmy_input', 'dmz_input']
         observed_state = self.m_screen('home_mat').widgets['dim_radio'].get_selection()
@@ -552,148 +586,149 @@ class Master(App):
     def update_excel_selection(self):
         export_flag = ' [EXPORTED]' if self.exported else ''
         self.m_screen().widgets['xcl_input'].set_value('Entries in stored file: '
-                                                       + str(len(DataHandler.export_entries))
+                                                       + str(len(Master.DataHandler.export_entries))
                                                        + export_flag)
 
+    class DataHandler:
+        """Class to handle the management of data storage for all inputs and outputs."""
 
-class DataHandler:
-    job_type: int
-    volume: float
-    dimensions: Tuple[float, ...]
-    export_entries = []
-    tool = ''
+        job_type: int
+        volume: float
+        dimensions: Tuple[float, ...]
+        export_entries = []
+        tool = ''
 
-    def __init__(self):
-        self.data = dict(tool='',
-                         job_type=-1,
-                         dimensions=(0., 0., 0.),
-                         block=(0., 0., 0.),
-                         precision=0,
-                         volume=0.,
-                         hours=0.,
-                         cost=0.,
-                         cost_mat=0.,
-                         cost_cut=0.,
-                         units='inch',
-                         conversion=1.,
-                         additionals=None)
+        def __init__(self):
+            self.data = dict(tool='',
+                             job_type=-1,
+                             dimensions=(0., 0., 0.),
+                             block=(0., 0., 0.),
+                             precision=0,
+                             volume=0.,
+                             hours=0.,
+                             cost=0.,
+                             cost_mat=0.,
+                             cost_cut=0.,
+                             units='inch',
+                             conversion=1.,
+                             additionals=None)
 
-    def set_tool(self, tool):
-        self.data['tool'] = DataHandler.tool = tool
+        def set_tool(self, tool):
+            self.data['tool'] = Master.DataHandler.tool = tool
 
-    def set_dimensions(self, dimensions: Tuple[float, float, float]):
-        self.data['box_dimensions'] = dimensions
-        print("VAR DIMENSIONS SET TO", dimensions)
+        def set_dimensions(self, dimensions: Tuple[float, float, float]):
+            self.data['box_dimensions'] = dimensions
+            print("VAR DIMENSIONS SET TO", dimensions)
 
-    def set_block(self, block: Tuple[float, float, float]):
-        self.data['block'] = block
+        def set_block(self, block: Tuple[float, float, float]):
+            self.data['block'] = block
 
-    def set_type(self, index):
-        self.data['job_type'] = index
-        # self.job_type = index
+        def set_type(self, index):
+            self.data['job_type'] = index
+            # self.job_type = index
 
-    def set_conversion(self, unit):
-        self.data['unit'] = unit
-        self.data['conversion'] = 1 / 25.4 if unit == UNIT_TYPES[1] else 1.
-        self.data['rev_conversion'] = 1. if unit == UNIT_TYPES[1] else 1 / 25.4
+        def set_conversion(self, unit):
+            self.data['unit'] = unit
+            self.data['conversion'] = 1 / 25.4 if unit == UNIT_TYPES[1] else 1.
+            self.data['rev_conversion'] = 1. if unit == UNIT_TYPES[1] else 1 / 25.4
 
-    def set_volume(self, volume):
-        self.data['volume'] = float(volume)
+        def set_volume(self, volume):
+            self.data['volume'] = float(volume)
 
-    def set_additionals(self, values):
-        self.data['additionals'] = values
+        def set_additionals(self, values):
+            self.data['additionals'] = values
 
-    def set_cost(self, cost, mode=''):
-        mode = '_' + mode if mode != '' else mode
-        self.data['cost' + mode] = float(str(cost) + '0')
+        def set_cost(self, cost, mode=''):
+            mode = '_' + mode if mode != '' else mode
+            self.data['cost' + mode] = float(str(cost) + '0')
 
-    def set_precision(self, precision):
-        self.data['precision'] = float(precision)
+        def set_precision(self, precision):
+            self.data['precision'] = float(precision)
 
-    def set_combo(self, combo):
-        self.data['combo'] = combo
+        def set_combo(self, combo):
+            self.data['combo'] = combo
 
-    def set_hours(self, hours):
-        self.data['hours'] = hours
+        def set_hours(self, hours):
+            self.data['hours'] = hours
 
-    def get_hours(self):
-        return self.data['hours']
+        def get_hours(self):
+            return self.data['hours']
 
-    def get_combo(self):
-        return self.data['combo']
+        def get_combo(self):
+            return self.data['combo']
 
-    def get_precision(self):
-        return self.data['precision']
+        def get_precision(self):
+            return self.data['precision']
 
-    def get_dimensions(self):
-        return self.data['box_dimensions']
+        def get_dimensions(self):
+            return self.data['box_dimensions']
 
-    def get_block(self):
-        return self.data['block']
+        def get_block(self):
+            return self.data['block']
 
-    def get_type(self):
-        return self.data['job_type']
+        def get_type(self):
+            return self.data['job_type']
 
-    def get_conversion(self, rev=False):
-        return self.data['conversion'] if not rev else self.data['rev_conversion']
+        def get_conversion(self, rev=False):
+            return self.data['conversion'] if not rev else self.data['rev_conversion']
 
-    def get_tool(self):
-        return DataHandler.tool if self.data['tool'] == '' else self.data['tool']
+        def get_tool(self):
+            return Master.DataHandler.tool if self.data['tool'] == '' else self.data['tool']
 
-    def get_volume(self):
-        return self.data['volume']
+        def get_volume(self):
+            return self.data['volume']
 
-    def get_cost(self, mode=''):
-        mode = '_' + mode if mode != '' else ''
-        return self.data['cost' + mode]
+        def get_cost(self, mode=''):
+            mode = '_' + mode if mode != '' else ''
+            return self.data['cost' + mode]
 
-    def get_unit(self):
-        return self.data['unit']
+        def get_unit(self):
+            return self.data['unit']
 
-    def get_data(self, mode):
-        print(*[n for n in self.get_block()])
-        if mode == 'mat':
-            print("EXPORT DATA:\n", [self.get_tool(),
-                                     self.get_type(),
-                                     self.get_combo(),
-                                     *[n for n in self.get_dimensions()],
-                                     self.get_unit(),
-                                     self.get_precision(),
-                                     *[n for n in self.get_block()],
-                                     self.get_volume(),
-                                     self.get_cost()])
-            return [self.get_tool(),
-                    self.get_type(),
-                    self.get_combo(),
-                    *[n for n in self.get_dimensions()],
-                    self.get_unit(),
-                    self.get_precision(),
-                    *[n for n in self.get_block()],
-                    self.get_volume(),
-                    self.get_hours(),
-                    self.get_cost('mat'),
-                    self.get_cost('cut'),
-                    self.get_cost()]
-        elif mode == 'cut':
-            return (self.data['tool'],
-                    self.data['job_type'],
-                    *[n for n in self.data['box_dimensions']],
-                    self.data['volume'],
-                    self.data['precision'],
-                    *[n for n in self.data['additionals']],
-                    self.data['cost'])
+        def get_data(self, mode):
+            print(*[n for n in self.get_block()])
+            if mode == 'mat':
+                print("EXPORT DATA:\n", [self.get_tool(),
+                                         self.get_type(),
+                                         self.get_combo(),
+                                         *[n for n in self.get_dimensions()],
+                                         self.get_unit(),
+                                         self.get_precision(),
+                                         *[n for n in self.get_block()],
+                                         self.get_volume(),
+                                         self.get_cost()])
+                return [self.get_tool(),
+                        self.get_type(),
+                        self.get_combo(),
+                        *[n for n in self.get_dimensions()],
+                        self.get_unit(),
+                        self.get_precision(),
+                        *[n for n in self.get_block()],
+                        self.get_volume(),
+                        self.get_hours(),
+                        self.get_cost('mat'),
+                        self.get_cost('cut'),
+                        self.get_cost()]
+            elif mode == 'cut':
+                return [self.data['tool'],
+                        self.data['job_type'],
+                        *[n for n in self.data['box_dimensions']],
+                        self.data['volume'],
+                        self.data['precision'],
+                        *[n for n in self.data['additionals']],
+                        self.data['cost']]
 
-    @staticmethod
-    def add_entry(entry):
-        DataHandler.export_entries.append(entry)
+        @staticmethod
+        def add_entry(entry):
+            Master.DataHandler.export_entries.append(entry)
 
-    @staticmethod
-    def get_entries():
-        return DataHandler.export_entries
+        @staticmethod
+        def get_entries():
+            return Master.DataHandler.export_entries
 
-    @staticmethod
-    def reset_entries():
-        DataHandler.export_entries = []
+        @staticmethod
+        def reset_entries():
+            Master.DataHandler.export_entries = []
 
 
 if __name__ == '__main__':
