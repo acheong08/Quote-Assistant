@@ -1,7 +1,7 @@
 import time
 from tkinter import *
 from tkinter import filedialog, messagebox
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Tuple
 
 # from src.application.defaults import DEFAULT_DPI
 
@@ -71,7 +71,7 @@ class WidgetCustom:
         """Method to set job label's text value."""
         try:
             self.text.set(value)
-            print('---s')
+            # print('---s')
         except AttributeError:
             print('---f')
             pass
@@ -98,8 +98,18 @@ class WidgetCustom:
         return None
 
     def initialize(self, widget_type, window, args, kwargs):
+        """
+        This method is what truly contructs the widget objects through tkinter, and places them on a screen. Typical
+        use case for this is when a screen is displayed in screen manager for the first time.
+
+        @param widget_type: what type of widget is going to be initialized (Tkinter object)
+        @param window: the tkinter root widget
+        @param args: any arguments to be passed into the widget constructor
+        @param kwargs: any keyword arguments to be passed into the widget constructor
+        """
         print("-----", widget_type, args, kwargs)
 
+        # I forgot why I needed to put this in tbh
         if self.text is not None and widget_type is not Radiobutton:
             print('ADDING TEXT TO', widget_type, 'OBJECT')
             try:
@@ -114,20 +124,28 @@ class WidgetCustom:
             # self.widget.configure(textvariable=self.text)
             self.text = StringVar(window, value=val)
 
+        # Where every single widget is constructed
         self.widget = widget_type(window, *args, **kwargs, textvariable=self.text)
 
+        # Some widgets need additional configuration after they are created, so this can be used for those cases
         print("CONFIG TEST:", self.config)
         if self.config is not None:
             print("RUNNING CONFIG ON", self)
             self.widget.config(**self.config)
 
+        # Checkbutton objects should use an integer variable instead of a text variable
         if type(self.widget) == Checkbutton:
             self.var = IntVar()
             self.widget.configure(variable=self.var)
             # self.widget.config(width=15)
+
+        # Optional additional configurations
         self.initialize_custom()
 
     def initialize_custom(self):
+        """
+        Empty method that can be overriden by subclasses to add additional functionality during initialization phase.
+        """
         pass
 
 
@@ -383,21 +401,30 @@ class FileButtonCustom(WidgetCustom):
 
 
 class ErrorManager:
+    """Class that manages the error popup in tkinter."""
 
     def __init__(self):
         self.error_history = []
 
-    def display(self, message):
+    def display(self, message='Something went Wrong.', header='Error'):
+        """
+        Method that displays the pop up with a custom message.
+
+        @param header: the text to display as the popup header
+        @param message: the text to display as the error message
+        """
         self.error_history.append(message)
-        messagebox.showerror('Error', message)
+        messagebox.showerror(header, message)
 
 
 class ScreenCustom:
+    """Class that manages a tkinter screen and its widgets."""
+
     widgets: Dict[str, WidgetCustom]
 
     def __init__(self, screen_manager, name, geometry, **kwargs):
         assert isinstance(screen_manager, ScreenManager)
-        self.screen_manager = screen_manager
+        self._screen_manager = screen_manager
         self.widgets = {}
         self._name = name
         self._geometry = geometry
@@ -411,38 +438,67 @@ class ScreenCustom:
         return self._geometry
 
     def initialize_widgets(self):
+        """
+        Method that initializes a screen's widgets when prompted.
+        """
+
+        # Widgets are reset in the case of a screen re-initialize
         self.widgets = {}
+        # kwargs hold the original values and positions of all widgets in the screen, so iteration is used to loop
+        # through each indivudal widget (in index 0) as well as its corresponding position (index 1-2)
         for kwarg in self.kwargs:
+            # Value is extract from the dictionary
             kwval = self.kwargs[kwarg]
+            # Widget is added to the array
             self.widgets[kwarg] = kwval[0]
+            # Widget is then initialized
             self.widgets[kwarg].initialize(self.widgets[kwarg].widget_type,
-                                           self.screen_manager.window,
+                                           self._screen_manager.window,
                                            self.widgets[kwarg].args,
                                            self.widgets[kwarg].kwargs)
             print(kwval)
+            # Widget is then placed on the screen
             self.widgets[kwarg].place_custom(kwval[1], kwval[2])
             self.widgets[kwarg].displayable = True
+            # Widget is then immediately removed from the screen because it may not be required.
             self.widgets[kwarg].toggle_widget(0)
+            # Toggle state is set to a default of 1 (on) unless prompted otherwise
             self.widgets[kwarg].toggle_state = 1 if len(kwval) < 4 else kwval[3]
             print("KWA:", kwarg, "| KWV:", kwval, "| TOGGLE:", self.widgets[kwarg].toggle_state)
 
     def set_screen(self):
-        self.screen_manager.transitioning = True
+        """
+        Method that sets the screen object in question as the current (display) screen.
+        """
+
+        # Transitioning variable set to disrupt other threads, giving time to do so
+        self._screen_manager.transitioning = True
         time.sleep(0.05)
-        if self.screen_manager.current_screen is not Ellipsis:
-            print(self.screen_manager.current_screen)
-            for widget in self.screen_manager.current_screen.widgets:
-                self.screen_manager.current_screen.widgets[widget].toggle_widget(0)
+        # Conditional ensuring there IS a screen that needs to be taken down (exception being initial boot)
+        if self._screen_manager.current_screen is not Ellipsis:
+            print(self._screen_manager.current_screen)
+            # Iterating widgets in the previous screen to be removed from the window
+            for widget in self._screen_manager.current_screen.widgets:
+                self._screen_manager.current_screen.widgets[widget].toggle_widget(0)
         time.sleep(0.05)
-        self.screen_manager.modify_geometry(*self._geometry) if self._geometry is not None else None
+        # The window geometry is modified to whatever is specified by this screen
+        self._screen_manager.modify_geometry(*self._geometry) if self._geometry is not None else None
+        # Iterating widgets in this screen to be displayed to the window
         for widget in self.widgets:
             self.widgets[widget].toggle_widget(self.widgets[widget].toggle_state)
-        self.screen_manager.previous_screen = self.screen_manager.current_screen
-        self.screen_manager.current_screen = self
-        self.screen_manager.transitioning = False
+        # Previous screen set in case it is required for later implementation
+        self._screen_manager.previous_screen = self._screen_manager.current_screen
+        # Current screen is set as itself in the screen manager so it is easily accessible
+        self._screen_manager.current_screen = self
+        # Transitioning set to false to end disruptions
+        self._screen_manager.transitioning = False
 
     def reset_screen(self):
-        self.screen_manager.transitioning = True
+        """
+        Method that resets the screen (returns all widgets to original states).
+        """
+
+        self._screen_manager.transitioning = True
         self.initialize_widgets()
         self.set_screen()
 
@@ -453,10 +509,10 @@ class ScreenCustom:
 
 
 class ScreenManager:
+    """Class that handles the management of one or more screens within thes application."""
+
     previous_screen: ScreenCustom
     current_screen: ScreenCustom
-
-    # screens: dict[str, Any]
 
     def __init__(self, window, locked=False):
         self.screens = {}
@@ -467,17 +523,44 @@ class ScreenManager:
         self.window = window
 
     def __call__(self, *args, **kwargs) -> ScreenCustom:
+        """
+        This method calls every time the object is called after initialization. It essentially returns a screen
+        object, either the name entered as an argument or the current screen if no argument exists.
+
+        @return: screen object
+        """
         return self.current_screen if len(args) == 0 else self.get_screen(args[0])
 
     def get_screen(self, name: str = '', index: int = 0):
+        """
+        Method that retrieves a screen object manually with multiple options of retrieval
+
+        @param name: name of the screen, if applicable
+        @param index: index of the screen in the screens dictionary, if applicable
+        @return: screen object
+        """
+
         screen: ScreenCustom = self.screens[list(self.screens)[index]] if name == '' else self.screens[name]
         return screen
 
-    def add_screen(self, name, geometry, kwargs) -> None:
+    def add_screen(self, name, geometry: Tuple[int, int], kwargs) -> None:
+        """
+        Method that adds a screen to the screen manager.
+
+        @param name: name of the screen
+        @param geometry: box_dimensions of the screen in (x, y) format
+        @param kwargs: should be used for widgets and their locations
+        """
         print('SCREEN KWARGS: ', kwargs)
         self.screens[name] = ScreenCustom(self, name, geometry, **kwargs)
 
     def modify_geometry(self, x, y):
+        """
+        Changes the size of the window which is displaying the screen.
+
+        @param x: specified length of the window
+        @param y: specified height of the window
+        """
         if self.locked:
             self.window.minsize(width=x, height=y)
             self.window.maxsize(width=x, height=y)

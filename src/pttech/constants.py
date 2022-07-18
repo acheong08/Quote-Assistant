@@ -122,7 +122,7 @@ ANALYSIS_ORDER = ('Volume To Remove',
                   'Time Required')
 
 
-TOOLS = resource_path('pttech/tools.json')
+TOOLS = resource_path('resources/data/tools.json')
 
 try:
     from sys import _MEIPASS

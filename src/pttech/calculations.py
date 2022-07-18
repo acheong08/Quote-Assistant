@@ -11,6 +11,7 @@ from math import *
 
 
 class BaseCalculations:
+    """Base calculator superclass for all calculator classes."""
 
     def __init__(self):
         self.space_conversion = 1.
@@ -23,14 +24,22 @@ class BaseCalculations:
         return self.total_cost
 
     @staticmethod
-    def _get_next_even_int(n):
+    def _get_next_even_int(n: float):
+        """
+        Method that returns the next even number based on a float input.
+
+        @rtype: float
+        """
         return float(int(n) + 1 if int(n) % 2 == 1 else int(n) + 2 if n != int(n) else n)
 
 
 class Material(BaseCalculations):
+    """Subclass pertaining to the calculations for material costs."""
 
     def __init__(self):
+        # Internal volume calculations put in list that matches indexes of job types
         self._get_required_volume = (self._3pcddz, self._2pcfrz, self._2pcfrs, self._2pcfra)
+        # Everything else is initialized to their default values
         self.dimensions = [0., 0., 0.]
         self.mod_dimensions = [0., 0., 0.]
         self.precision = 1
@@ -47,14 +56,25 @@ class Material(BaseCalculations):
         return self.required_volume
 
     def get_block(self):
-        return self.mod_dimensions
+        # return self.mod_dimensions
+        return [self.mod_dimensions[n] / self.space_conversion for n in range(3)]
 
     def calculate_cost(self, job, dimensions, conversion, precision, is_combo, config):
-        # self.dimensions = [0., 0., 0.]
+        """
+        Overriden superclcass method that calculates the material costs based on above parameters.
+
+        @param job: type of job (index)
+        @param dimensions: the box_dimensions of the part as a tuple
+        @param conversion: the space conversion rate
+        @param precision: the difficulty offset
+        @param is_combo: boolean determining whether the part is comboed
+        @param config: the config.json file in dictionary format
+        """
         self.precision = precision
         print("CONFIG IMPORT:", config)
         self.config = config
         self.dimensions, self.space_conversion = dimensions, conversion
+        print('self.space_conversion', self.space_conversion)
         self.dimensions = [self.dimensions[n] * self.space_conversion for n in range(3)]
 
         print(self.dimensions)
@@ -102,73 +122,56 @@ class Material(BaseCalculations):
 
 
 class Cutting(BaseCalculations):
-    """Calculator class to execute all the calculations in order to determine
-        the remaining output data."""
+    """Calculator class to execute all the calculations in order to determine remaining output data."""
 
     def __init__(self):
         self.total_time = 0.
-        self.dimensions = [0., 0., 0.]
+        self.box_dimensions = [0., 0., 0.]
         self.precision = 1
+        self.material = ''
+        self.part_dimensions = [0., 0., 0.]
         # Dictionary defined to map each instruction to corresponding method
-        self.instructions = {'Volume To Remove': self._calculate_volume,
-                             'Estimated FR Ratio': self._calculate_ratio,
-                             'Percent Error': self._calculate_error,
-                             'Cut Rate': self._calculate_rate,
-                             'Time Required': self._calculate_time}
+        # self.instructions = {'Volume To Remove': self._calculate_volume,
+        #                      'Estimated FR Ratio': self._calculate_ratio,
+        #                      'Percent Error': self._calculate_error,
+        #                      'Cut Rate': self._calculate_rate,
+        #                      'Time Required': self._calculate_time}
         self.cut_volume = self.cut_ratio = self.cut_error = self.cut_rate = 0
         self.m_tools = ToolManager()
         super().__init__()
 
-    # def __call__(self, operation,
-    #              mapped_obj=None,
-    #              initial_value=-1,
-    #              padding_amount=0,
-    #              additional_values=0) -> float:
-    #     """ "__call__" runs every time the object is called after __init__
-    #
-    #     Parameters:
-    #         operation: which instruction to run
-    #         mapped_obj: map of the data values from DataIO
-    #         initial_value: sometimes can be the initial constant
-    #         padding_amount: sometimes can be the maximum modification amount
-    #         additional_values: utilized if additional values required
-    #
-    #     Returns the internal calculation corresponding to the instruction"""
-    #
-    #     # Gets the placeholder values redefined (if necessary)
-    #     self.mapped_obj = mapped_obj
-    #     self.initial_value = initial_value
-    #     self.padding_amount = padding_amount
-    #     self.additional_values = additional_values
-    #     # The internal calculation is run and returns the resultant value
-    #     return self.instructions[operation]()
-
     def get_time(self):
         return self.total_time
 
-    def calculate_cost(self, mat, dimensions, volume, precision, conversion, is_combo, config):
+    def calculate_cost(self, mat, box, dim, precision, conversion, is_combo, config):
         self.material = 'zinc' if mat in (0, 1) else 'steel' if mat in (2,) else 'aluminum' if mat in (3,) else ''
-        self.dimensions = dimensions
-        self.part_volume = volume
+        self.box_dimensions = box
+        self.part_dimensions = dim
         self.space_conversion = conversion
         self.precision = precision
         self.config = config
-        self.dimensions = [self.dimensions[n] / self.space_conversion for n in range(3)]
+        print('self.box_dimensions', self.box_dimensions)
+        print('self.part_dimensions', self.part_dimensions)
+        self.box_dimensions = [self.box_dimensions[n] / self.space_conversion for n in range(3)]
+        self.part_dimensions = [self.part_dimensions[n] / self.space_conversion for n in range(3)]
 
-        # self.cut_volume = self._calculate_volume()
-        # self.cut_ratio = self._calculate_ratio()
-        # self.cut_error = self._calculate_error()
-        # self.cut_rate = self._calculate_rate()
-        # self.total_cost += self._calculate_time()
-
+        self.cut_volume = self._calculate_volume()
+        print('self.cut_volume', self.cut_volume)
+        self.cut_ratio = self._calculate_ratio()
+        print('self.cut_ratio', self.cut_ratio)
+        self.cut_error = self._calculate_error()
+        print('self.cut_error', self.cut_error)
+        self.cut_rate = self._calculate_rate()
+        print('self.cut_rate', self.cut_rate)
         self.combo = 1. if not is_combo else COMBO_MULTIPLIERS[self.material.capitalize()]
-        self.total_time += self._legacy_method() * self.combo / 2.4
+        self.total_time += self._calculate_time() * self.combo / 2.4
+        # self.total_time += self._legacy_method() * self.combo / 2.4
         self.total_cost += self.total_time * self.config['cost_per_hour_' + self.material]
         print('TOTAL COST IN HOURS: ', self.total_cost)
-        self.total_cost = 0
+        # self.total_cost = 0
 
     def _legacy_method(self):
-        return prod(self.dimensions) / 144
+        return prod(self.box_dimensions) / 144
 
     @property
     def get_additional_values(self):
@@ -189,7 +192,8 @@ class Cutting(BaseCalculations):
 
             v = total volume occupied by the part"""
 
-        r = numpy.prod(self.dimensions) - self.part_volume
+        # r = numpy.prod(self.box_dimensions) - self.part_dimensions
+        r = numpy.prod(self.box_dimensions) - numpy.prod(self.part_dimensions) * 0.025
         return round(r, 2)
 
     def _calculate_ratio(self) -> float:
@@ -198,7 +202,7 @@ class Cutting(BaseCalculations):
 
         This formula involves taking an initial value and modifying that value
         by a certain amount depending on certain factors. In this case, the
-        dimensions are taken into account.
+        box_dimensions are taken into account.
 
         Current formula is [p = a(-e^(-0.00277x)+1)+b], where:
 
@@ -212,14 +216,14 @@ class Cutting(BaseCalculations):
 
             b = the original value to be modified (from ptt.constants)"""
 
-        l, h, w = map(float, self.dimensions)
+        l, h, w = map(float, self.box_dimensions)
         a = FRATE_VAR
         b = FRATE_RATIO
         x = abs((l + w + h) / 3)
         p = a * (-e ** (-0.00277 * x) + 1) + b
         return round(p, 3)
 
-    def _calculate_error(self) -> float:  # TODO: Add machine implementation
+    def _calculate_error(self) -> float:
 
         """[WIP] Internal method to calculate predicted percentage error of
         the cutting time on the machines.
@@ -273,7 +277,7 @@ class Cutting(BaseCalculations):
         s = 0.
         t = []
 
-        potency = 0.25
+        potency = 0.5
 
         tools = self.m_tools.get_job_tools('stamping')
 
@@ -315,12 +319,14 @@ class Cutting(BaseCalculations):
             c = cut rate (calculated in a prior method)"""
 
         v, r, p, c = self.cut_volume, self.cut_ratio, self.cut_error, self.cut_rate
-        t = (v / c) * p / r / 60
+        mod = r * self.cut_ratio / 2.4
+        t = (v / c) * p / r / 60 * mod
         print(v, r, p, c)
         return round(t, 3)
 
 
 class MasterCalculations:
+    """Class to handle the management of all calculators in the application"""
 
     def __init__(self):
         self.m_materials = Material()
@@ -328,6 +334,12 @@ class MasterCalculations:
         self.m_base = BaseCalculations()
 
     def __call__(self, calculator=BaseCalculations):
+        """
+        Method that calls every time the class is called after initialization. Fetches the relevant calculator.
+
+        @param calculator: the requested calculator
+        @return: the corresponding calculator object
+        """
         if calculator is Material:
             print("CALC MATCH FOUND")
             return self.m_materials
@@ -338,6 +350,11 @@ class MasterCalculations:
             return self.m_base
 
     def get_cumulative_cost(self):
+        """
+        Method that retrieves the summation of all the costs derived from the calculators.
+
+        @return: the cumulative cost derived from the calculators
+        """
         cost = 0
         for calculator in [self.m_base, self.m_cutting, self.m_materials]:
             cost += calculator.get_cost()
