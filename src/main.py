@@ -147,7 +147,7 @@ class Master(App):
                                            0.75, 0.7],
                                 ud_button=[ButtonCustom(self.update_config, 'Update', 10, 2),
                                            0.5, 0.9],
-                                rt_button=[ButtonCustom(self.reset_home, 'Cancel', 7, 1),
+                                rt_button=[ButtonCustom(self.return_home, 'Cancel', 7, 1),
                                            0.9, 0.9])
 
         # Cutting home screen GUI
@@ -326,6 +326,7 @@ class Master(App):
         """
         Method that switches screen back to home, but does NOT reset it.
         """
+
         self.m_calc = MasterCalculations()
         self.m_screen('home_' + self.get_mode(True)).set_screen()
 

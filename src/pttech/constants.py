@@ -64,7 +64,7 @@ print("SUPER DIR:", _get_super_dir(3))
 APP_MODES = ('Material Costs', 'Cutting Hours [WIP]')
 
 QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc F/RS Zinc Tool', '2pc F/RS Steel Tool', '2pc F/RS Al Tool')
-UNIT_TYPES = ('inch', 'millimeter')
+UNIT_TYPES = ('Inch', 'Millimeter')
 MATERIAL_DENSITIES = {"Zinc": 0.25,
                       "Steel": 0.283,
                       "Aluminum": 0.1}
@@ -85,8 +85,8 @@ MAT_TOOLS_INFO = {'Steel': _insert_dict((0.741, 7.266, 3757.143)),
                   'Zinc': _insert_dict((0.894, 8.587, 4730.000))}
 MATERIALS = tuple(MAT_TOOLS_INFO.keys())
 MACHINES = ('GROB', 'HAAS2', 'OKK1', 'OKK2', 'VW1', 'VW2')
-MAX_DIFFICULTY = 4
-DIFFICULTIES = [str(n) for n in range(1, MAX_DIFFICULTY + 1)]
+MAX_DIFFICULTY = 5
+DIFFICULTIES = [str(n) for n in range(0, MAX_DIFFICULTY + 1)]
 INIT_PARAMETERS = (('Quote', 'Material', 'Difficulty', 'Machine'),
                    ['Box X', 'Box Y', 'Box Z', 'Volume', 'Mass',
                     'Projected Area'])
@@ -108,7 +108,7 @@ FORM_UNITS = (('', '', '', ''),
               ('mm', 'mm', 'mm', 'mm³', 'mm²', 'mm³', '', '', 'mm³/min',
                'hours'))
 # Placeholder values for later redefinition
-RSPEED_AV = 15000
+RSPEED_AV = 15600
 # Base feedrate:non-feedrate ratio - estimate from Kevin
 FRATE_RATIO = 0.85
 FRATE_VAR = -0.05
