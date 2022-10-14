@@ -3,10 +3,17 @@ import os
 import sys
 import time
 
-from application.constants import *
+try:
+    from application.constants import *
+    from application.gui import *
+    from application.utils import resource_path
+except ImportError:
+    # PyCharm is stupid, I'm stupid, we're all stupid.
+    from src.application.constants import *
+    from src.application.gui import *
+    from src.application.utils import resource_path
+
 from tkinter import *
-from application.gui import *
-from application.utils import resource_path
 from multitasking import task
 
 
@@ -44,13 +51,17 @@ class App:
         print(self.app_fields)
 
         self.window = Tk()
-        self.m_screen = ScreenManager(self.window)
+        self.locked = self.app_fields['lock']
+
+        self.m_screen = ScreenManager(self.window, self.locked)
+        self.m_error = ErrorManager()
+
         self.dim_x = self.app_fields['dimensions'][0]
         self.dim_y = self.app_fields['dimensions'][1]
 
         for screen in self.app_fields['screens']:
             print("SCREEN: ", screen)
-            self.m_screen.add_screen(screen[0], screen[1])
+            self.m_screen.add_screen(*screen)
 
         self.window.title(self.app_fields['title'])
         self.dpi = self.window.winfo_fpixels('1i')
@@ -59,8 +70,7 @@ class App:
         self.dim_y = int(self.dim_y * self.dpi) // 96
         self.window.geometry(str(self.dim_x) + 'x' + str(self.dim_y))
         self.window.config(background=self.app_fields['background'])
-
-        if self.app_fields['lock']:
+        if self.locked:
             self.window.minsize(width=self.dim_x, height=self.dim_y)
             self.window.maxsize(width=self.dim_x, height=self.dim_y)
         print(os.path.abspath(os.path.curdir))
@@ -77,7 +87,7 @@ class App:
 
         self.running = True
 
-        self._loop()
+        self._start_loop()
 
         self.window.mainloop()
 
@@ -86,14 +96,26 @@ class App:
         os._exit(0)
 
     @task
-    def _loop(self):
-        if not self.running:
-            exit()
-        time.sleep(1. / DEFAULT_FPS)
-        self.periodic()
+    def _start_loop(self):
         self._loop()
+
+    def _loop(self):
+        while self.running:
+            exit() if not self.running else None
+            time.sleep(1. / DEFAULT_FPS)
+            try:
+                self.periodic() if not self.m_screen.transitioning else print("TRANSITIONING...")
+            # except AttributeError:
+            #     print("ATTRIBUTE ERROR IN PERIODIC.")
+            #     exit()
+            except KeyError:
+                print("KEY ERROR IN PERIODIC.")
+                exit()
+            # self._loop()
 
     def periodic(self):
         pass
+
+
 
 

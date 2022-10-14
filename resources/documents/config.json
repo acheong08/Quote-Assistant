@@ -1,0 +1,8 @@
+{
+    "cost_per_pound_steel": 2.6,
+    "cost_per_pound_zinc": 0.4,
+    "cost_per_pound_aluminum": 4.0,
+    "cost_per_hour_steel": 500.0,
+    "cost_per_hour_zinc": 375.0,
+    "cost_per_hour_aluminum": 400.0
+}

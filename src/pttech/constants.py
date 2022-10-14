@@ -29,6 +29,13 @@ def resource_path(relative_path):
         base_path = sys._MEIPASS
     except AttributeError:
         base_path = os.path.abspath(".")
+        print("DIRFILES:", os.listdir(os.curdir))
+        if 'python38.dll' in os.listdir(os.curdir):
+            print("EXECUTABLE?")
+            base_path = os.getenv('APPDATA') if 'resources' in relative_path else os.path.abspath(".")
+        else:
+            print("NON_EXECUTABLE?")
+            base_path = os.path.abspath("..")
     print(os.path.join(base_path, relative_path))
     return os.path.join(base_path, relative_path)
 
@@ -54,20 +61,32 @@ def _get_super_dir(exponent, file=os.path.realpath(__file__)):
 
 print("SUPER DIR:", _get_super_dir(3))
 
-QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc F/RS Zinc Tool', '2pc F/RS Steel Tool')
-UNIT_TYPES = ('inch', 'millimeter')
-MATERIAL_DENSITIES = {"Zinc": 0.25,
-                      "Steel": 0.283}
+APP_MODES = ('Material Costs', 'Cutting Hours [WIP]')
 
-CIMATRON_LOCATORS = ('Box X:', 'Box Y:', 'Box Z:')
+QUOTE_TYPES = ('3pc Draw Die Zinc', '2pc F/RS Zinc Tool', '2pc F/RS Steel Tool', '2pc F/RS Al Tool')
+UNIT_TYPES = ('Inch', 'Millimeter')
+MATERIAL_DENSITIES = {"Zinc": 0.25,
+                      "Steel": 0.283,
+                      "Aluminum": 0.1}
+
+COMBO_MULTIPLIERS = {'Zinc': 1.6,
+                     'Steel': 2.,
+                     'Aluminum': 2.}
+
+PATTERN_MULTIPLIER = 0.15
+BASING_MULTIPLIERS = {'2pc': 0.2,'3pc': 0.3}
+ZINC_PADDING = 2
+
+CIMATRON_LOCATORS = {'mat': ('Box X:', 'Box Y:', 'Box Z:'),
+                     'cut': ('Box X:', 'Box Y:', 'Box Z:', 'Volume Total:')}
 
 MAT_TOOLS_INFO = {'Steel': _insert_dict((0.741, 7.266, 3757.143)),
                   'Aluminum': _insert_dict((0.7395, 8.674285714, 3800.000)),
                   'Zinc': _insert_dict((0.894, 8.587, 4730.000))}
 MATERIALS = tuple(MAT_TOOLS_INFO.keys())
 MACHINES = ('GROB', 'HAAS2', 'OKK1', 'OKK2', 'VW1', 'VW2')
-MAX_DIFFICULTY = 4
-DIFFICULTIES = [str(n) for n in range(1, MAX_DIFFICULTY + 1)]
+MAX_DIFFICULTY = 5
+DIFFICULTIES = [str(n) for n in range(0, MAX_DIFFICULTY + 1)]
 INIT_PARAMETERS = (('Quote', 'Material', 'Difficulty', 'Machine'),
                    ['Box X', 'Box Y', 'Box Z', 'Volume', 'Mass',
                     'Projected Area'])
@@ -89,7 +108,7 @@ FORM_UNITS = (('', '', '', ''),
               ('mm', 'mm', 'mm', 'mm³', 'mm²', 'mm³', '', '', 'mm³/min',
                'hours'))
 # Placeholder values for later redefinition
-RSPEED_AV = 15000
+RSPEED_AV = 15600
 # Base feedrate:non-feedrate ratio - estimate from Kevin
 FRATE_RATIO = 0.85
 FRATE_VAR = -0.05
